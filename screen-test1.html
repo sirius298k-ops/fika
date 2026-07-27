@@ -121,7 +121,11 @@ draw();
 
 document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight')next();
-  if(e.key==='r')set(ref(db,'energy'),0);
+  if(e.key==='r'){
+    set(ref(db,'energy'),0);
+    set(ref(db,'players'),null);  // 清除所有玩家
+    document.getElementById('count').textContent='0';
+  }
 });
 </script>
 </body>
