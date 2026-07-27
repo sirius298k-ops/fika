@@ -3,30 +3,74 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <style>
-  body{margin:0;background:#0a0a1a;display:flex;flex-direction:column;
-       align-items:center;justify-content:center;height:100vh;
-       font-family:monospace;color:#0ff;touch-action:none}
-  #dot{width:80px;height:80px;border-radius:50%;background:rgba(0,255,255,.2);
-       border:2px solid #0ff;box-shadow:0 0 20px rgba(0,255,255,.3);
-       transition:transform .1s,background .2s}
-  #msg{margin-top:20px;font-size:.85rem;opacity:.5;text-align:center;line-height:1.6}
-  #start-btn{background:#0ff;color:#0a0a1a;border:none;padding:18px 36px;
-             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a1a;display:flex;flex-direction:column;
+       align-items:center;height:100vh;
+       font-family:'Arial',sans-serif;color:#0ff;touch-action:none;overflow:hidden}
+  
+  #start-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+             background:#0ff;color:#0a0a1a;border:none;padding:18px 36px;
+             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer;z-index:20}
   .hidden{display:none}
-  #status{font-size:1.3rem;margin-bottom:30px}
+
+  #main{width:100%;height:100%;display:flex;flex-direction:column;padding:15px}
+  
+  /* Top section - tilt indicator */
+  #tilt-section{display:flex;align-items:center;justify-content:center;padding:15px 0}
+  #dot{width:50px;height:50px;border-radius:50%;background:rgba(0,255,255,.2);
+       border:2px solid #0ff;box-shadow:0 0 15px rgba(0,255,255,.3);
+       transition:transform .1s,background .2s}
+
+  /* Emoji reactions */
+  #reactions{display:flex;gap:8px;justify-content:center;padding:10px 0;flex-wrap:wrap}
+  .emoji-btn{font-size:1.8rem;background:rgba(255,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
+             border-radius:12px;padding:8px 12px;cursor:pointer;transition:transform .1s,background .2s}
+  .emoji-btn:active{transform:scale(1.3);background:rgba(0,255,255,0.2)}
+
+  /* Input area */
+  #input-section{margin-top:auto;padding:10px 0 20px 0;width:100%}
+  #input-row{display:flex;gap:8px;width:100%}
+  #text-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(0,255,255,0.3);
+              border-radius:10px;padding:12px 15px;color:#fff;font-size:1rem;outline:none}
+  #text-input::placeholder{color:rgba(0,255,255,0.3)}
+  #send-btn{background:#0ff;color:#0a0a1a;border:none;padding:12px 18px;
+            border-radius:10px;font-weight:bold;font-size:0.9rem;cursor:pointer}
+  #input-label{color:#0ff;font-size:0.75rem;opacity:0.5;margin-bottom:6px;text-align:center}
+
+  /* Status */
+  #status{text-align:center;font-size:0.8rem;opacity:0.4;padding:5px 0}
+  #mode-display{text-align:center;font-size:0.9rem;padding:8px;
+                background:rgba(0,255,255,0.05);border-radius:8px;margin:5px 0}
 </style>
 </head>
 <body>
 <button id="start-btn">TAP TO JOIN</button>
-<div id="controls" class="hidden">
-  <div id="status">Connected ✓</div>
-  <div id="dot"></div>
-  <div id="msg">Tilt your phone to move particles<br>Shake to power up!</div>
+<div id="main" class="hidden">
+  <div id="status">Connected ✓ | Tilt & Shake active</div>
+  <div id="mode-display">🔋 Shake to unlock</div>
+  <div id="tilt-section"><div id="dot"></div></div>
+  <div id="reactions">
+    <div class="emoji-btn" data-emoji="👍">👍</div>
+    <div class="emoji-btn" data-emoji="🎉">🎉</div>
+    <div class="emoji-btn" data-emoji="🔥">🔥</div>
+    <div class="emoji-btn" data-emoji="💡">💡</div>
+    <div class="emoji-btn" data-emoji="❤️">❤️</div>
+    <div class="emoji-btn" data-emoji="😂">😂</div>
+    <div class="emoji-btn" data-emoji="🤔">🤔</div>
+    <div class="emoji-btn" data-emoji="👏">👏</div>
+  </div>
+  <div id="input-section">
+    <div id="input-label">Type a word or question</div>
+    <div id="input-row">
+      <input id="text-input" type="text" placeholder="Type here..." autocomplete="off">
+      <button id="send-btn">SEND</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, set, onDisconnect, get }
+import { getDatabase, ref, set, push, onDisconnect, get, onValue }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -47,26 +91,77 @@ const myRef = ref(db,'players/'+myId);
 onDisconnect(myRef).remove();
 
 let lastShake=0, lastAcc={x:0,y:0,z:0};
+let currentMode='shake';
 
+const colors=['#0ff','#f0f','#ff0','#0f0','#f90','#f55','#5ff','#ff5'];
+
+// Listen to screen mode changes
+onValue(ref(db,'screenMode'),snap=>{
+  currentMode=snap.val()||'shake';
+  const display=document.getElementById('mode-display');
+  const label=document.getElementById('input-label');
+  if(currentMode==='wordcloud'){
+    display.textContent='📝 Word Cloud — type a word!';
+    label.textContent='Enter a word or short phrase';
+  } else if(currentMode==='qa'){
+    display.textContent='❓ Q&A — ask anything anonymously!';
+    label.textContent='Type your question (anonymous)';
+  } else if(currentMode==='free'){
+    display.textContent='💬 Free mode — words & questions welcome';
+    label.textContent='Type anything';
+  } else {
+    display.textContent='🔋 Shake to unlock next topic!';
+    label.textContent='Shake your phone!';
+  }
+});
+
+// Send text
+function sendText(){
+  const input=document.getElementById('text-input');
+  const text=input.value.trim();
+  if(!text)return;
+
+  if(currentMode==='qa'){
+    push(ref(db,'questions'),{text:text, time:Date.now()});
+  } else {
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    push(ref(db,'words'),{text:text, color:color, time:Date.now()});
+  }
+  input.value='';
+}
+
+document.getElementById('send-btn').addEventListener('click',sendText);
+document.getElementById('text-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')sendText();
+});
+
+// Emoji reactions
+document.querySelectorAll('.emoji-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    push(ref(db,'reactions'),{emoji:btn.dataset.emoji, time:Date.now()});
+  });
+});
+
+// Start button
 document.getElementById('start-btn').addEventListener('click', async()=>{
   if(typeof DeviceOrientationEvent!=='undefined'
      && typeof DeviceOrientationEvent.requestPermission==='function'){
-    try{ await DeviceOrientationEvent.requestPermission(); }catch(e){}
+    try{await DeviceOrientationEvent.requestPermission();}catch(e){}
   }
   if(typeof DeviceMotionEvent!=='undefined'
      && typeof DeviceMotionEvent.requestPermission==='function'){
-    try{ await DeviceMotionEvent.requestPermission(); }catch(e){}
+    try{await DeviceMotionEvent.requestPermission();}catch(e){}
   }
 
   document.getElementById('start-btn').classList.add('hidden');
-  document.getElementById('controls').classList.remove('hidden');
+  document.getElementById('main').classList.remove('hidden');
   set(myRef,{x:0,y:0});
 
   // Tilt
   window.addEventListener('deviceorientation',e=>{
     let tx=Math.max(-1,Math.min(1,(e.gamma||0)/30));
     let ty=Math.max(-1,Math.min(1,((e.beta||0)-40)/30));
-    document.getElementById('dot').style.transform=`translate(${tx*25}px,${ty*25}px)`;
+    document.getElementById('dot').style.transform=`translate(${tx*20}px,${ty*20}px)`;
     set(myRef,{x:tx,y:ty});
   });
 
@@ -75,14 +170,14 @@ document.getElementById('start-btn').addEventListener('click', async()=>{
     const a=e.accelerationIncludingGravity;if(!a)return;
     const delta=Math.abs((a.x||0)-lastAcc.x)+Math.abs((a.y||0)-lastAcc.y)+Math.abs((a.z||0)-lastAcc.z);
     lastAcc={x:a.x||0,y:a.y||0,z:a.z||0};
-    if(delta>25 && Date.now()-lastShake>300){
+    if(delta>25&&Date.now()-lastShake>300){
       lastShake=Date.now();
       const dot=document.getElementById('dot');
       dot.style.background='rgba(0,255,255,.8)';
       setTimeout(()=>dot.style.background='rgba(0,255,255,.2)',200);
       const snap=await get(ref(db,'energy'));
       const cur=snap.val()||0;
-      if(cur<100) set(ref(db,'energy'),Math.min(cur+4,100));
+      if(cur<100)set(ref(db,'energy'),Math.min(cur+4,100));
     }
   });
 });
