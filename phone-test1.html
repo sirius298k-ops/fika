@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<style>
+  body{margin:0;background:#0a0a1a;display:flex;flex-direction:column;
+       align-items:center;justify-content:center;height:100vh;
+       font-family:monospace;color:#0ff;touch-action:none}
+  #dot{width:80px;height:80px;border-radius:50%;background:rgba(0,255,255,.2);
+       border:2px solid #0ff;box-shadow:0 0 20px rgba(0,255,255,.3);
+       transition:transform .1s,background .2s}
+  #msg{margin-top:20px;font-size:.85rem;opacity:.5;text-align:center;line-height:1.6}
+  #start-btn{background:#0ff;color:#0a0a1a;border:none;padding:18px 36px;
+             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer}
+  .hidden{display:none}
+  #status{font-size:1.3rem;margin-bottom:30px}
+</style>
+</head>
+<body>
+<button id="start-btn">TAP TO JOIN</button>
+<div id="controls" class="hidden">
+  <div id="status">Connected ✓</div>
+  <div id="dot"></div>
+  <div id="msg">Tilt your phone to move particles<br>Shake to power up!</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, set, onDisconnect, get }
+  from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAGUS5pDI2Brd5EdZYZYk_N_Ex4G2Enc9Y",
+  authDomain: "test1-fika.firebaseapp.com",
+  databaseURL: "https://test1-fika-default-rtdb.firebaseio.com",
+  projectId: "test1-fika",
+  storageBucket: "test1-fika.firebasestorage.app",
+  messagingSenderId: "195634513366",
+  appId: "1:195634513366:web:08b8afefc1406f7cb1d077",
+  measurementId: "G-0LLML02VVQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const myId = Math.random().toString(36).slice(2,8);
+const myRef = ref(db,'players/'+myId);
+onDisconnect(myRef).remove();
+
+let lastShake=0, lastAcc={x:0,y:0,z:0};
+
+document.getElementById('start-btn').addEventListener('click', async()=>{
+  if(typeof DeviceOrientationEvent!=='undefined'
+     && typeof DeviceOrientationEvent.requestPermission==='function'){
+    try{ await DeviceOrientationEvent.requestPermission(); }catch(e){}
+  }
+  if(typeof DeviceMotionEvent!=='undefined'
+     && typeof DeviceMotionEvent.requestPermission==='function'){
+    try{ await DeviceMotionEvent.requestPermission(); }catch(e){}
+  }
+
+  document.getElementById('start-btn').classList.add('hidden');
+  document.getElementById('controls').classList.remove('hidden');
+  set(myRef,{x:0,y:0});
+
+  // Tilt
+  window.addEventListener('deviceorientation',e=>{
+    let tx=Math.max(-1,Math.min(1,(e.gamma||0)/30));
+    let ty=Math.max(-1,Math.min(1,((e.beta||0)-40)/30));
+    document.getElementById('dot').style.transform=`translate(${tx*25}px,${ty*25}px)`;
+    set(myRef,{x:tx,y:ty});
+  });
+
+  // Shake
+  window.addEventListener('devicemotion',async e=>{
+    const a=e.accelerationIncludingGravity;if(!a)return;
+    const delta=Math.abs((a.x||0)-lastAcc.x)+Math.abs((a.y||0)-lastAcc.y)+Math.abs((a.z||0)-lastAcc.z);
+    lastAcc={x:a.x||0,y:a.y||0,z:a.z||0};
+    if(delta>25 && Date.now()-lastShake>300){
+      lastShake=Date.now();
+      const dot=document.getElementById('dot');
+      dot.style.background='rgba(0,255,255,.8)';
+      setTimeout(()=>dot.style.background='rgba(0,255,255,.2)',200);
+      const snap=await get(ref(db,'energy'));
+      const cur=snap.val()||0;
+      if(cur<100) set(ref(db,'energy'),Math.min(cur+4,100));
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body{margin:0;background:#0a0a1a;overflow:hidden}
+  #info{position:fixed;top:20px;left:20px;color:#0ff;font:14px monospace;z-index:2}
+  #topic{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+         color:#fff;font:bold 2.5rem Arial;text-align:center;
+         text-shadow:0 0 30px #0ff;transition:opacity .6s;opacity:0;z-index:2}
+  #topic.show{opacity:1}
+  #energy{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);
+          width:300px;height:10px;background:#222;border-radius:5px;z-index:2;
+          box-shadow:0 0 10px rgba(0,255,255,0.3)}
+  #energy-bar{height:100%;width:0%;background:linear-gradient(90deg,#0ff,#f0f);
+              border-radius:5px;transition:width .2s}
+  #instruction{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+               color:#0ff;font:12px monospace;opacity:.5;z-index:2}
+</style>
+</head>
+<body>
+<div id="info">Players: <span id="count">0</span></div>
+<div id="topic"></div>
+<div id="instruction">everyone shake to unlock next topic | press → to skip</div>
+<div id="energy"><div id="energy-bar"></div></div>
+<canvas id="c"></canvas>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, onValue, set }
+  from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAGUS5pDI2Brd5EdZYZYk_N_Ex4G2Enc9Y",
+  authDomain: "test1-fika.firebaseapp.com",
+  databaseURL: "https://test1-fika-default-rtdb.firebaseio.com",
+  projectId: "test1-fika",
+  storageBucket: "test1-fika.firebasestorage.app",
+  messagingSenderId: "195634513366",
+  appId: "1:195634513366:web:08b8afefc1406f7cb1d077",
+  measurementId: "G-0LLML02VVQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const agenda = [
+  "Welcome to Fika ☕",
+  "Digital Twin in Manufacturing",
+  "Predictive Maintenance",
+  "Open Discussion",
+  "Thank you! 🎉"
+];
+let idx = -1, mode = 'float';
+let forceX = 0, forceY = 0;
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W,H;
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
+resize(); window.onresize=resize;
+
+const particles = Array.from({length:160},()=>({
+  x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+  vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2,r:Math.random()*3+1
+}));
+
+onValue(ref(db,'players'),snap=>{
+  const data=snap.val()||{};
+  const players=Object.values(data);
+  document.getElementById('count').textContent=players.length;
+  forceX=0;forceY=0;
+  players.forEach(p=>{forceX+=p.x||0;forceY+=p.y||0;});
+  forceX/=Math.max(players.length,1);
+  forceY/=Math.max(players.length,1);
+});
+
+onValue(ref(db,'energy'),snap=>{
+  const val=snap.val()||0;
+  document.getElementById('energy-bar').style.width=val+'%';
+  if(val>=100){
+    next();
+    setTimeout(()=>set(ref(db,'energy'),0),500);
+  }
+});
+
+function next(){
+  if(idx>=agenda.length-1)return;
+  idx++;
+  const el=document.getElementById('topic');
+  el.classList.remove('show');
+  mode='gather';
+  setTimeout(()=>{el.textContent=agenda[idx];el.classList.add('show')},300);
+  setTimeout(()=>mode='float',1500);
+}
+
+function draw(){
+  ctx.fillStyle='rgba(10,10,26,0.12)';
+  ctx.fillRect(0,0,W,H);
+  particles.forEach(p=>{
+    p.vx+=forceX*0.15;p.vy+=forceY*0.15;
+    if(mode==='gather'){p.vx+=(W/2-p.x)*.004;p.vy+=(H/2-p.y)*.004;}
+    p.vx*=.97;p.vy*=.97;p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;
+    if(p.y<0||p.y>H)p.vy*=-1;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,255,255,0.7)';ctx.fill();
+  });
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=dx*dx+dy*dy;
+      if(d<5000){
+        ctx.strokeStyle=`rgba(0,255,255,${.3*(1-d/5000)})`;ctx.lineWidth=.5;
+        ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(draw);
+}
+draw();
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')next();
+  if(e.key==='r')set(ref(db,'energy'),0);
+});
+</script>
+</body>
+</html>
