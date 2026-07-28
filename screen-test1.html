@@ -4,27 +4,45 @@
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#0a0a1a;overflow:hidden;font-family:'Arial',sans-serif}
-  #info{position:fixed;top:20px;left:20px;color:#0ff;font:14px monospace;z-index:10}
-  #topic{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-         color:#fff;font:bold 2.5rem Arial;text-align:center;
-         text-shadow:0 0 30px #0ff;transition:opacity .6s;opacity:0;z-index:5}
-  #topic.show{opacity:1}
-  #energy{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);
-          width:300px;height:10px;background:#222;border-radius:5px;z-index:5;
-          box-shadow:0 0 10px rgba(0,255,255,0.3)}
+
+  /* Slide style */
+  #slide{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+         width:80vw;max-width:900px;background:rgba(255,255,255,0.03);
+         border:1px solid rgba(0,255,255,0.15);border-radius:20px;
+         padding:60px 80px;text-align:center;z-index:5;
+         backdrop-filter:blur(5px);box-shadow:0 0 60px rgba(0,255,255,0.05)}
+  #slide-number{position:absolute;top:20px;right:30px;color:rgba(0,255,255,0.3);
+                font:12px monospace}
+  #topic{color:#fff;font-size:2.8rem;font-weight:bold;
+         text-shadow:0 0 20px rgba(0,255,255,0.3);
+         transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px)}
+  #topic.show{opacity:1;transform:translateY(0)}
+  #subtitle{color:rgba(0,255,255,0.6);font-size:1.1rem;margin-top:15px;
+            transition:opacity .6s;opacity:0}
+  #subtitle.show{opacity:1}
+
+  /* Info bar */
+  #info{position:fixed;top:20px;left:30px;color:#0ff;font:13px monospace;z-index:10;opacity:0.6}
+  #mode-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);
+                  color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
+
+  /* Energy bar */
+  #energy-wrap{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);
+               text-align:center;z-index:5}
+  #energy-label{color:rgba(0,255,255,0.4);font:11px monospace;margin-bottom:6px}
+  #energy{width:300px;height:6px;background:#111;border-radius:3px;
+          box-shadow:0 0 10px rgba(0,255,255,0.1)}
   #energy-bar{height:100%;width:0%;background:linear-gradient(90deg,#0ff,#f0f);
-              border-radius:5px;transition:width .2s}
-  #instruction{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
-               color:#0ff;font:12px monospace;opacity:.4;z-index:5;text-align:center}
-  
+              border-radius:3px;transition:width .2s}
+
   /* Word Cloud */
   #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3}
   .word{position:absolute;color:#fff;font-weight:bold;opacity:0;
-        transition:opacity 1s,transform 2s;text-shadow:0 0 10px currentColor}
+        transition:opacity 1s,transform 1.5s;text-shadow:0 0 10px currentColor}
   .word.show{opacity:1}
 
   /* Reactions */
-  .reaction{position:fixed;font-size:2rem;bottom:-50px;z-index:6;
+  .reaction{position:fixed;font-size:2.2rem;bottom:-50px;z-index:6;
             animation:floatUp 3s ease-out forwards;pointer-events:none}
   @keyframes floatUp{
     0%{bottom:-50px;opacity:1;transform:scale(1)}
@@ -32,33 +50,54 @@
   }
 
   /* Questions */
-  #questions{position:fixed;top:20px;right:20px;width:320px;z-index:8;
-             display:flex;flex-direction:column;gap:10px;max-height:80vh;overflow:hidden}
-  .question-card{background:rgba(0,255,255,0.08);border:1px solid rgba(0,255,255,0.3);
-                 border-radius:10px;padding:14px 18px;color:#fff;font-size:0.95rem;
+  #questions{position:fixed;top:80px;right:30px;width:320px;z-index:8;
+             display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:hidden}
+  .question-card{background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
+                 border-radius:12px;padding:14px 18px;color:#fff;font-size:0.9rem;
                  backdrop-filter:blur(5px);animation:slideIn .5s ease-out;
-                 box-shadow:0 0 15px rgba(0,255,255,0.1)}
+                 box-shadow:0 0 15px rgba(0,255,255,0.05)}
   @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
-  .question-card .q-label{color:#0ff;font-size:0.7rem;margin-bottom:6px;opacity:0.7}
+  .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;text-transform:uppercase;letter-spacing:1px}
 
-  /* Mode indicator */
-  #mode-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);
-                  color:#0ff;font:bold 1rem monospace;z-index:10;opacity:0.6}
+  /* Bottom instruction */
+  #instruction{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
+               color:rgba(0,255,255,0.25);font:11px monospace;z-index:5}
+
+  /* Progress dots */
+  #progress{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+            display:flex;gap:8px;z-index:5}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,255,255,0.2);
+       transition:background .3s,transform .3s}
+  .dot.active{background:#0ff;transform:scale(1.4);box-shadow:0 0 10px #0ff}
+  .dot.done{background:rgba(0,255,255,0.5)}
 </style>
 </head>
 <body>
 <div id="info">Players: <span id="count">0</span></div>
 <div id="mode-indicator"></div>
-<div id="topic"></div>
+
+<div id="slide">
+  <div id="slide-number"></div>
+  <div id="topic"></div>
+  <div id="subtitle"></div>
+</div>
+
+<div id="progress"></div>
 <div id="wordcloud"></div>
 <div id="questions"></div>
-<div id="instruction">→ next | R reboot | 1 wordcloud mode | 2 Q&A mode | 3 free mode</div>
-<div id="energy"><div id="energy-bar"></div></div>
+
+<div id="energy-wrap">
+  <div id="energy-label">COLLECTIVE ENERGY</div>
+  <div id="energy"><div id="energy-bar"></div></div>
+</div>
+
+<div id="instruction">→ next | R reboot | 1 wordcloud | 2 Q&A | 3 free | 0 shake</div>
+
 <canvas id="c"></canvas>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, onChildAdded, remove }
+import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -77,15 +116,33 @@ const db = getDatabase(app);
 
 // === AGENDA ===
 const agenda = [
-  "Welcome to Fika ☕",
-  "Digital Twin in Manufacturing",
-  "Predictive Maintenance",
-  "Open Discussion",
-  "Thank you! 🎉"
+  { title:"Welcome to Fika ☕", subtitle:"Scan QR to join with your phone" },
+  { title:"What does Digital Manufacturing mean to you?", subtitle:"💭 Share a word on your phone" },
+  { title:"Digital Twin in Practice", subtitle:"🏭 From concept to production floor" },
+  { title:"Predictive → Prescriptive", subtitle:"🔮 The next evolution" },
+  { title:"Your Questions", subtitle:"❓ Ask anonymously from your phone" },
+  { title:"Key Takeaways", subtitle:"🎯 One word to remember" },
+  { title:"Thank you! 🎉", subtitle:"" }
 ];
+
 let idx=-1, mode='float';
 let forceX=0, forceY=0;
-let screenMode='shake'; // shake, wordcloud, qa, free
+
+// Build progress dots
+const progressEl=document.getElementById('progress');
+agenda.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot';
+  progressEl.appendChild(d);
+});
+
+function updateProgress(){
+  document.querySelectorAll('.dot').forEach((d,i)=>{
+    d.className='dot';
+    if(i<idx) d.classList.add('done');
+    if(i===idx) d.classList.add('active');
+  });
+}
 
 // === CANVAS ===
 const canvas=document.getElementById('c');
@@ -94,13 +151,12 @@ let W,H;
 function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
 resize();window.onresize=resize;
 
-const particles=Array.from({length:160},()=>({
+const particles=Array.from({length:120},()=>({
   x:Math.random()*innerWidth,y:Math.random()*innerHeight,
-  vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2,r:Math.random()*3+1
+  vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,r:Math.random()*2+0.5
 }));
 
 // === FIREBASE LISTENERS ===
-// Players tilt
 onValue(ref(db,'players'),snap=>{
   const data=snap.val()||{};
   const players=Object.values(data);
@@ -111,42 +167,36 @@ onValue(ref(db,'players'),snap=>{
   forceY/=Math.max(players.length,1);
 });
 
-// Energy
 onValue(ref(db,'energy'),snap=>{
   const val=snap.val()||0;
   document.getElementById('energy-bar').style.width=val+'%';
   if(val>=100){next();setTimeout(()=>set(ref(db,'energy'),0),500);}
 });
 
-// Words (word cloud)
 onChildAdded(ref(db,'words'),snap=>{
   const word=snap.val();
   if(!word||!word.text)return;
-  showWord(word.text, word.color||'#0ff');
+  showWord(word.text,word.color||'#0ff');
 });
 
-// Reactions
 onChildAdded(ref(db,'reactions'),snap=>{
   const r=snap.val();
   if(!r)return;
   showReaction(r.emoji);
 });
 
-// Questions
 onChildAdded(ref(db,'questions'),snap=>{
   const q=snap.val();
   if(!q||!q.text)return;
   showQuestion(q.text);
 });
 
-// === SCREEN MODE ===
 onValue(ref(db,'screenMode'),snap=>{
-  const val=snap.val();
-  if(val) screenMode=val;
+  const val=snap.val()||'shake';
   document.getElementById('mode-indicator').textContent=
-    screenMode==='wordcloud'?'📝 WORD CLOUD MODE':
-    screenMode==='qa'?'❓ Q&A MODE':
-    screenMode==='free'?'💬 FREE MODE':'🔋 SHAKE TO UNLOCK';
+    val==='wordcloud'?'📝 WORD CLOUD':
+    val==='qa'?'❓ Q&A':
+    val==='free'?'💬 FREE':'🔋 SHAKE TO UNLOCK';
 });
 
 // === FUNCTIONS ===
@@ -154,25 +204,34 @@ function next(){
   if(idx>=agenda.length-1)return;
   idx++;
   const el=document.getElementById('topic');
+  const sub=document.getElementById('subtitle');
+  const num=document.getElementById('slide-number');
   el.classList.remove('show');
+  sub.classList.remove('show');
   mode='gather';
-  setTimeout(()=>{el.textContent=agenda[idx];el.classList.add('show')},300);
+  setTimeout(()=>{
+    el.textContent=agenda[idx].title;
+    sub.textContent=agenda[idx].subtitle;
+    num.textContent=(idx+1)+' / '+agenda.length;
+    el.classList.add('show');
+    sub.classList.add('show');
+    updateProgress();
+  },400);
   setTimeout(()=>mode='float',1500);
 }
 
-function showWord(text, color){
+function showWord(text,color){
   const el=document.createElement('div');
   el.className='word';
   el.textContent=text;
-  el.style.left=Math.random()*70+15+'%';
-  el.style.top=Math.random()*60+20+'%';
-  el.style.fontSize=(Math.random()*1.5+1.2)+'rem';
+  el.style.left=Math.random()*60+20+'%';
+  el.style.top=Math.random()*50+25+'%';
+  el.style.fontSize=(Math.random()*1.2+1)+'rem';
   el.style.color=color;
-  el.style.transform=`rotate(${Math.random()*20-10}deg)`;
+  el.style.transform=`rotate(${Math.random()*16-8}deg)`;
   document.getElementById('wordcloud').appendChild(el);
   setTimeout(()=>el.classList.add('show'),50);
-  // Remove after 30s to avoid clutter
-  setTimeout(()=>el.remove(),30000);
+  setTimeout(()=>el.remove(),25000);
 }
 
 function showReaction(emoji){
@@ -190,7 +249,6 @@ function showQuestion(text){
   card.className='question-card';
   card.innerHTML=`<div class="q-label">Anonymous Question</div>${text}`;
   container.appendChild(card);
-  // Keep max 5 questions visible
   while(container.children.length>5){container.firstChild.remove();}
 }
 
@@ -205,28 +263,30 @@ function reboot(){
   document.getElementById('wordcloud').innerHTML='';
   document.getElementById('questions').innerHTML='';
   idx=-1;
-  const el=document.getElementById('topic');
-  el.classList.remove('show');
+  document.getElementById('topic').classList.remove('show');
+  document.getElementById('subtitle').classList.remove('show');
+  document.getElementById('slide-number').textContent='';
+  updateProgress();
 }
 
-// === DRAW ===
+// === DRAW (subtle background) ===
 function draw(){
-  ctx.fillStyle='rgba(10,10,26,0.12)';
+  ctx.fillStyle='rgba(10,10,26,0.08)';
   ctx.fillRect(0,0,W,H);
   particles.forEach(p=>{
-    p.vx+=forceX*0.15;p.vy+=forceY*0.15;
-    if(mode==='gather'){p.vx+=(W/2-p.x)*.004;p.vy+=(H/2-p.y)*.004;}
-    p.vx*=.97;p.vy*=.97;p.x+=p.vx;p.y+=p.vy;
+    p.vx+=forceX*0.08;p.vy+=forceY*0.08;
+    if(mode==='gather'){p.vx+=(W/2-p.x)*.002;p.vy+=(H/2-p.y)*.002;}
+    p.vx*=.98;p.vy*=.98;p.x+=p.vx;p.y+=p.vy;
     if(p.x<0||p.x>W)p.vx*=-1;
     if(p.y<0||p.y>H)p.vy*=-1;
     ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle='rgba(0,255,255,0.7)';ctx.fill();
+    ctx.fillStyle='rgba(0,255,255,0.4)';ctx.fill();
   });
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
       const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=dx*dx+dy*dy;
-      if(d<5000){
-        ctx.strokeStyle=`rgba(0,255,255,${.3*(1-d/5000)})`;ctx.lineWidth=.5;
+      if(d<4000){
+        ctx.strokeStyle=`rgba(0,255,255,${.15*(1-d/4000)})`;ctx.lineWidth=.4;
         ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);
         ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();
       }
@@ -236,14 +296,14 @@ function draw(){
 }
 draw();
 
-// === KEYBOARD CONTROLS ===
+// === KEYBOARD ===
 document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight')next();
   if(e.key==='r'||e.key==='R')reboot();
-  if(e.key==='1'){set(ref(db,'screenMode'),'wordcloud');}
-  if(e.key==='2'){set(ref(db,'screenMode'),'qa');}
-  if(e.key==='3'){set(ref(db,'screenMode'),'free');}
-  if(e.key==='0'){set(ref(db,'screenMode'),'shake');}
+  if(e.key==='1')set(ref(db,'screenMode'),'wordcloud');
+  if(e.key==='2')set(ref(db,'screenMode'),'qa');
+  if(e.key==='3')set(ref(db,'screenMode'),'free');
+  if(e.key==='0')set(ref(db,'screenMode'),'shake');
 });
 </script>
 </body>
