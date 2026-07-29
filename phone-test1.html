@@ -8,36 +8,41 @@
        align-items:center;height:100vh;
        font-family:'Arial',sans-serif;color:#0ff;touch-action:none;overflow:hidden}
   
-  #start-btn{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-             background:#0ff;color:#0a0a1a;border:none;padding:18px 36px;
-             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer;z-index:20}
-  .hidden{display:none}
+  #join-screen{position:fixed;top:0;left:0;width:100%;height:100%;
+               display:flex;flex-direction:column;align-items:center;
+               justify-content:center;padding:30px;z-index:20;background:#0a0a1a}
+  #name-input{background:rgba(255,255,255,0.05);border:1px solid rgba(0,255,255,0.3);
+              border-radius:10px;padding:14px 18px;color:#fff;font-size:1.1rem;
+              outline:none;width:100%;max-width:280px;text-align:center;margin-bottom:15px}
+  #name-input::placeholder{color:rgba(0,255,255,0.3)}
+  #start-btn{background:#0ff;color:#0a0a1a;border:none;padding:16px 36px;
+             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer;
+             opacity:0.3;pointer-events:none;transition:opacity .3s}
+  #start-btn.active{opacity:1;pointer-events:auto}
+  #join-label{font-size:0.8rem;opacity:0.4;margin-bottom:20px}
 
+  .hidden{display:none}
   #main{width:100%;height:100%;display:flex;flex-direction:column;padding:15px}
-  
   #status{text-align:center;font-size:0.75rem;opacity:0.4;padding:5px 0}
   #mode-display{text-align:center;font-size:0.85rem;padding:8px;
                 background:rgba(0,255,255,0.05);border-radius:8px;margin:5px 0}
 
-  /* Energy tap button */
-  #energy-section{display:flex;align-items:center;justify-content:center;padding:15px 0;flex:1}
-  #tap-btn{width:120px;height:120px;border-radius:50%;
+  #energy-section{display:flex;align-items:center;justify-content:center;padding:10px 0;flex:none;height:150px}
+  #tap-btn{width:90px;height:90px;border-radius:50%;
            background:radial-gradient(circle,rgba(0,255,255,0.3),rgba(0,255,255,0.05));
            border:2px solid #0ff;box-shadow:0 0 30px rgba(0,255,255,0.2);
            display:flex;align-items:center;justify-content:center;
-           font-size:0.8rem;color:#0ff;cursor:pointer;
+           font-size:0.7rem;color:#0ff;cursor:pointer;
            transition:transform .1s,box-shadow .1s;user-select:none}
   #tap-btn:active{transform:scale(0.9);box-shadow:0 0 50px rgba(0,255,255,0.6);
                   background:radial-gradient(circle,rgba(0,255,255,0.6),rgba(0,255,255,0.1))}
   #tap-label{text-align:center;font-size:0.7rem;opacity:0.4;margin-top:8px}
 
-  /* Emoji reactions */
   #reactions{display:flex;gap:6px;justify-content:center;padding:8px 0;flex-wrap:wrap}
   .emoji-btn{font-size:1.6rem;background:rgba(255,255,255,0.03);border:1px solid rgba(0,255,255,0.15);
              border-radius:10px;padding:6px 10px;cursor:pointer;transition:transform .1s,background .2s}
   .emoji-btn:active{transform:scale(1.3);background:rgba(0,255,255,0.2)}
 
-  /* Input area */
   #input-section{padding:8px 0 20px 0;width:100%}
   #input-row{display:flex;gap:8px;width:100%}
   #text-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(0,255,255,0.3);
@@ -49,9 +54,16 @@
 </style>
 </head>
 <body>
-<button id="start-btn">TAP TO JOIN</button>
+
+<!-- Join Screen with Name -->
+<div id="join-screen">
+  <div id="join-label">Enter your name to join</div>
+  <input id="name-input" type="text" placeholder="Your name..." autocomplete="off">
+  <button id="start-btn">JOIN</button>
+</div>
+
 <div id="main" class="hidden">
-  <div id="status">Connected ✓</div>
+  <div id="status">Connected as <span id="display-name"></span></div>
   <div id="mode-display">🔋 Tap the circle to power up!</div>
 
   <div id="energy-section">
@@ -103,8 +115,20 @@ const myId = Math.random().toString(36).slice(2,8);
 const myRef = ref(db,'players/'+myId);
 onDisconnect(myRef).remove();
 
-let lastTap=0;
+let myName = '';
+let lastTap = 0;
 const colors=['#0ff','#f0f','#ff0','#0f0','#f90','#f55','#5ff','#ff5'];
+
+// Enable join button when name is entered
+const nameInput = document.getElementById('name-input');
+const startBtn = document.getElementById('start-btn');
+nameInput.addEventListener('input',()=>{
+  if(nameInput.value.trim().length>0) startBtn.classList.add('active');
+  else startBtn.classList.remove('active');
+});
+nameInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&nameInput.value.trim()) startBtn.click();
+});
 
 // Listen to screen mode
 onValue(ref(db,'screenMode'),snap=>{
@@ -115,8 +139,8 @@ onValue(ref(db,'screenMode'),snap=>{
     display.textContent='📝 Word Cloud — type a word!';
     label.textContent='Enter a word or short phrase';
   } else if(currentMode==='qa'){
-    display.textContent='❓ Q&A — ask anything anonymously!';
-    label.textContent='Type your question (anonymous)';
+    display.textContent='❓ Q&A — ask your question!';
+    label.textContent='Type your question';
   } else if(currentMode==='free'){
     display.textContent='💬 Free mode — words & questions welcome';
     label.textContent='Type anything';
@@ -134,10 +158,10 @@ function sendText(){
   get(ref(db,'screenMode')).then(snap=>{
     const mode=snap.val()||'shake';
     if(mode==='qa'){
-      push(ref(db,'questions'),{text:text,time:Date.now()});
+      push(ref(db,'questions'),{text:text, name:myName, time:Date.now()});
     } else {
       const color=colors[Math.floor(Math.random()*colors.length)];
-      push(ref(db,'words'),{text:text,color:color,time:Date.now()});
+      push(ref(db,'words'),{text:text, name:myName, color:color, time:Date.now()});
     }
   });
   input.value='';
@@ -151,7 +175,7 @@ document.getElementById('text-input').addEventListener('keydown',e=>{
 // Emoji reactions
 document.querySelectorAll('.emoji-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    push(ref(db,'reactions'),{emoji:btn.dataset.emoji,time:Date.now()});
+    push(ref(db,'reactions'),{emoji:btn.dataset.emoji, name:myName, time:Date.now()});
   });
 });
 
@@ -164,22 +188,28 @@ document.getElementById('tap-btn').addEventListener('click',async()=>{
   if(cur<100) set(ref(db,'energy'),Math.min(cur+3,100));
 });
 
-// Start button
-document.getElementById('start-btn').addEventListener('click',async()=>{
+// Join
+startBtn.addEventListener('click',async()=>{
+  myName=nameInput.value.trim();
+  if(!myName)return;
+
   if(typeof DeviceOrientationEvent!=='undefined'
      && typeof DeviceOrientationEvent.requestPermission==='function'){
     try{await DeviceOrientationEvent.requestPermission();}catch(e){}
   }
 
-  document.getElementById('start-btn').classList.add('hidden');
+  document.getElementById('join-screen').classList.add('hidden');
   document.getElementById('main').classList.remove('hidden');
-  set(myRef,{x:0,y:0});
+  document.getElementById('display-name').textContent=myName;
 
-  // Tilt (still active for particle control)
+  // Register player with name
+  set(myRef,{x:0, y:0, name:myName});
+
+  // Tilt
   window.addEventListener('deviceorientation',e=>{
     let tx=Math.max(-1,Math.min(1,(e.gamma||0)/30));
     let ty=Math.max(-1,Math.min(1,((e.beta||0)-40)/30));
-    set(myRef,{x:tx,y:ty});
+    set(myRef,{x:tx, y:ty, name:myName});
   });
 });
 </script>
