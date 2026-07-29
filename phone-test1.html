@@ -16,9 +16,7 @@
               outline:none;width:100%;max-width:280px;text-align:center;margin-bottom:15px}
   #name-input::placeholder{color:rgba(0,255,255,0.3)}
   #start-btn{background:#0ff;color:#0a0a1a;border:none;padding:16px 36px;
-             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer;
-             opacity:0.3;pointer-events:none;transition:opacity .3s}
-  #start-btn.active{opacity:1;pointer-events:auto}
+             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer}
   #join-label{font-size:0.8rem;opacity:0.4;margin-bottom:20px}
 
   .hidden{display:none}
@@ -55,7 +53,6 @@
 </head>
 <body>
 
-<!-- Join Screen with Name -->
 <div id="join-screen">
   <div id="join-label">Enter your name to join</div>
   <input id="name-input" type="text" placeholder="Your name..." autocomplete="off">
@@ -119,22 +116,12 @@ let myName = '';
 let lastTap = 0;
 const colors=['#0ff','#f0f','#ff0','#0f0','#f90','#f55','#5ff','#ff5'];
 
-// Enable join button when name is entered
-const nameInput = document.getElementById('name-input');
-const startBtn = document.getElementById('start-btn');
-nameInput.addEventListener('input',()=>{
-  if(nameInput.value.trim().length>0) startBtn.classList.add('active');
-  else startBtn.classList.remove('active');
-});
-nameInput.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&nameInput.value.trim()) startBtn.click();
-});
-
 // Listen to screen mode
 onValue(ref(db,'screenMode'),snap=>{
   const currentMode=snap.val()||'shake';
   const display=document.getElementById('mode-display');
   const label=document.getElementById('input-label');
+  if(!display)return;
   if(currentMode==='wordcloud'){
     display.textContent='📝 Word Cloud — type a word!';
     label.textContent='Enter a word or short phrase';
@@ -188,21 +175,24 @@ document.getElementById('tap-btn').addEventListener('click',async()=>{
   if(cur<100) set(ref(db,'energy'),Math.min(cur+3,100));
 });
 
-// Join
-startBtn.addEventListener('click',async()=>{
-  myName=nameInput.value.trim();
-  if(!myName)return;
+// Join button
+document.getElementById('start-btn').addEventListener('click',async()=>{
+  myName=document.getElementById('name-input').value.trim();
+  if(!myName){
+    alert('Please enter your name');
+    return;
+  }
 
   if(typeof DeviceOrientationEvent!=='undefined'
      && typeof DeviceOrientationEvent.requestPermission==='function'){
     try{await DeviceOrientationEvent.requestPermission();}catch(e){}
   }
 
-  document.getElementById('join-screen').classList.add('hidden');
+  document.getElementById('join-screen').style.display='none';
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('display-name').textContent=myName;
 
-  // Register player with name
+  // Register player
   set(myRef,{x:0, y:0, name:myName});
 
   // Tilt
@@ -211,6 +201,11 @@ startBtn.addEventListener('click',async()=>{
     let ty=Math.max(-1,Math.min(1,((e.beta||0)-40)/30));
     set(myRef,{x:tx, y:ty, name:myName});
   });
+});
+
+// Also allow Enter key on name input
+document.getElementById('name-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('start-btn').click();
 });
 </script>
 </body>
