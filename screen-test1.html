@@ -1,101 +1,103 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#0a0a1a;display:flex;flex-direction:column;
-       align-items:center;height:100vh;
-       font-family:'Arial',sans-serif;color:#0ff;touch-action:none;overflow:hidden}
-  
-  #join-screen{position:fixed;top:0;left:0;width:100%;height:100%;
-               display:flex;flex-direction:column;align-items:center;
-               justify-content:center;padding:30px;z-index:20;background:#0a0a1a}
-  #name-input{background:rgba(255,255,255,0.05);border:1px solid rgba(0,255,255,0.3);
-              border-radius:10px;padding:14px 18px;color:#fff;font-size:1.1rem;
-              outline:none;width:100%;max-width:280px;text-align:center;margin-bottom:15px}
-  #name-input::placeholder{color:rgba(0,255,255,0.3)}
-  #start-btn{background:#0ff;color:#0a0a1a;border:none;padding:16px 36px;
-             font-size:1.1rem;font-weight:bold;border-radius:10px;cursor:pointer;
-             opacity:0.3;pointer-events:none;transition:opacity .3s}
-  #start-btn.active{opacity:1;pointer-events:auto}
-  #join-label{font-size:0.8rem;opacity:0.4;margin-bottom:20px}
+  body{background:#0a0a1a;overflow:hidden;font-family:'Arial',sans-serif}
 
-  .hidden{display:none}
-  #main{width:100%;height:100%;display:flex;flex-direction:column;padding:15px}
-  #status{text-align:center;font-size:0.75rem;opacity:0.4;padding:5px 0}
-  #mode-display{text-align:center;font-size:0.85rem;padding:8px;
-                background:rgba(0,255,255,0.05);border-radius:8px;margin:5px 0}
+  /* Slide style */
+  #slide{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+         width:80vw;max-width:900px;background:rgba(255,255,255,0.03);
+         border:1px solid rgba(0,255,255,0.15);border-radius:20px;
+         padding:60px 80px;text-align:center;z-index:5;
+         backdrop-filter:blur(5px);box-shadow:0 0 60px rgba(0,255,255,0.05)}
+  #slide-number{position:absolute;top:20px;right:30px;color:rgba(0,255,255,0.3);
+                font:12px monospace}
+  #topic{color:#fff;font-size:2.8rem;font-weight:bold;
+         text-shadow:0 0 20px rgba(0,255,255,0.3);
+         transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px)}
+  #topic.show{opacity:1;transform:translateY(0)}
+  #subtitle{color:rgba(0,255,255,0.6);font-size:1.1rem;margin-top:15px;
+            transition:opacity .6s;opacity:0}
+  #subtitle.show{opacity:1}
 
-  #energy-section{display:flex;align-items:center;justify-content:center;padding:10px 0;flex:none;height:150px}
-  #tap-btn{width:90px;height:90px;border-radius:50%;
-           background:radial-gradient(circle,rgba(0,255,255,0.3),rgba(0,255,255,0.05));
-           border:2px solid #0ff;box-shadow:0 0 30px rgba(0,255,255,0.2);
-           display:flex;align-items:center;justify-content:center;
-           font-size:0.7rem;color:#0ff;cursor:pointer;
-           transition:transform .1s,box-shadow .1s;user-select:none}
-  #tap-btn:active{transform:scale(0.9);box-shadow:0 0 50px rgba(0,255,255,0.6);
-                  background:radial-gradient(circle,rgba(0,255,255,0.6),rgba(0,255,255,0.1))}
-  #tap-label{text-align:center;font-size:0.7rem;opacity:0.4;margin-top:8px}
+  /* Info bar */
+  #info{position:fixed;top:20px;left:30px;color:#0ff;font:13px monospace;z-index:10;opacity:0.6}
+  #mode-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);
+                  color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
 
-  #reactions{display:flex;gap:6px;justify-content:center;padding:8px 0;flex-wrap:wrap}
-  .emoji-btn{font-size:1.6rem;background:rgba(255,255,255,0.03);border:1px solid rgba(0,255,255,0.15);
-             border-radius:10px;padding:6px 10px;cursor:pointer;transition:transform .1s,background .2s}
-  .emoji-btn:active{transform:scale(1.3);background:rgba(0,255,255,0.2)}
+  /* Energy bar */
+  #energy-wrap{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);
+               text-align:center;z-index:5}
+  #energy-label{color:rgba(0,255,255,0.4);font:11px monospace;margin-bottom:6px}
+  #energy{width:300px;height:6px;background:#111;border-radius:3px;
+          box-shadow:0 0 10px rgba(0,255,255,0.1)}
+  #energy-bar{height:100%;width:0%;background:linear-gradient(90deg,#0ff,#f0f);
+              border-radius:3px;transition:width .2s}
 
-  #input-section{padding:8px 0 20px 0;width:100%}
-  #input-row{display:flex;gap:8px;width:100%}
-  #text-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(0,255,255,0.3);
-              border-radius:10px;padding:12px 15px;color:#fff;font-size:1rem;outline:none}
-  #text-input::placeholder{color:rgba(0,255,255,0.3)}
-  #send-btn{background:#0ff;color:#0a0a1a;border:none;padding:12px 18px;
-            border-radius:10px;font-weight:bold;font-size:0.9rem;cursor:pointer}
-  #input-label{color:#0ff;font-size:0.7rem;opacity:0.4;margin-bottom:6px;text-align:center}
+  /* Word Cloud */
+  #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3}
+  .word{position:absolute;color:#fff;font-weight:bold;opacity:0;
+        transition:opacity 1s,transform 1.5s;text-shadow:0 0 10px currentColor}
+  .word.show{opacity:1}
+
+  /* Reactions */
+  .reaction{position:fixed;font-size:2.2rem;bottom:-50px;z-index:6;
+            animation:floatUp 3s ease-out forwards;pointer-events:none}
+  @keyframes floatUp{
+    0%{bottom:-50px;opacity:1;transform:scale(1)}
+    100%{bottom:110vh;opacity:0;transform:scale(1.5)}
+  }
+
+  /* Questions */
+  #questions{position:fixed;top:80px;right:30px;width:320px;z-index:8;
+             display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:hidden}
+  .question-card{background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
+                 border-radius:12px;padding:14px 18px;color:#fff;font-size:0.9rem;
+                 backdrop-filter:blur(5px);animation:slideIn .5s ease-out;
+                 box-shadow:0 0 15px rgba(0,255,255,0.05)}
+  @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+  .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;text-transform:uppercase;letter-spacing:1px}
+
+  /* Bottom instruction */
+  #instruction{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
+               color:rgba(0,255,255,0.25);font:11px monospace;z-index:5}
+
+  /* Progress dots */
+  #progress{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+            display:flex;gap:8px;z-index:5}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,255,255,0.2);
+       transition:background .3s,transform .3s}
+  .dot.active{background:#0ff;transform:scale(1.4);box-shadow:0 0 10px #0ff}
+  .dot.done{background:rgba(0,255,255,0.5)}
 </style>
 </head>
 <body>
+<div id="info">Players: <span id="count">0</span></div>
+<div id="mode-indicator"></div>
 
-<!-- Join Screen with Name -->
-<div id="join-screen">
-  <div id="join-label">Enter your name to join</div>
-  <input id="name-input" type="text" placeholder="Your name..." autocomplete="off">
-  <button id="start-btn">JOIN</button>
+<div id="slide">
+  <div id="slide-number"></div>
+  <div id="topic"></div>
+  <div id="subtitle"></div>
 </div>
 
-<div id="main" class="hidden">
-  <div id="status">Connected as <span id="display-name"></span></div>
-  <div id="mode-display">🔋 Tap the circle to power up!</div>
+<div id="progress"></div>
+<div id="wordcloud"></div>
+<div id="questions"></div>
 
-  <div id="energy-section">
-    <div>
-      <div id="tap-btn">⚡ TAP</div>
-      <div id="tap-label">tap to add energy</div>
-    </div>
-  </div>
-
-  <div id="reactions">
-    <div class="emoji-btn" data-emoji="👍">👍</div>
-    <div class="emoji-btn" data-emoji="🎉">🎉</div>
-    <div class="emoji-btn" data-emoji="🔥">🔥</div>
-    <div class="emoji-btn" data-emoji="💡">💡</div>
-    <div class="emoji-btn" data-emoji="❤️">❤️</div>
-    <div class="emoji-btn" data-emoji="😂">😂</div>
-    <div class="emoji-btn" data-emoji="🤔">🤔</div>
-    <div class="emoji-btn" data-emoji="👏">👏</div>
-  </div>
-
-  <div id="input-section">
-    <div id="input-label">Type a word or question</div>
-    <div id="input-row">
-      <input id="text-input" type="text" placeholder="Type here..." autocomplete="off">
-      <button id="send-btn">SEND</button>
-    </div>
-  </div>
+<div id="energy-wrap">
+  <div id="energy-label">COLLECTIVE ENERGY</div>
+  <div id="energy"><div id="energy-bar"></div></div>
 </div>
+
+<div id="instruction">→ next | R reboot | 1 wordcloud | 2 Q&A | 3 free | 0 shake</div>
+
+<canvas id="c"></canvas>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, set, push, onDisconnect, get, onValue }
+import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -111,106 +113,197 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const myId = Math.random().toString(36).slice(2,8);
-const myRef = ref(db,'players/'+myId);
-onDisconnect(myRef).remove();
 
-let myName = '';
-let lastTap = 0;
-const colors=['#0ff','#f0f','#ff0','#0f0','#f90','#f55','#5ff','#ff5'];
+// === AGENDA ===
+const agenda = [
+  { title:"Welcome to Fika ☕", subtitle:"Scan QR to join with your phone" },
+  { title:"What does Digital Manufacturing mean to you?", subtitle:"💭 Share a word on your phone" },
+  { title:"Digital Twin in Practice", subtitle:"🏭 From concept to production floor" },
+  { title:"Predictive → Prescriptive", subtitle:"🔮 The next evolution" },
+  { title:"Your Questions", subtitle:"❓ Ask anonymously from your phone" },
+  { title:"Key Takeaways", subtitle:"🎯 One word to remember" },
+  { title:"Thank you! 🎉", subtitle:"" }
+];
 
-// Enable join button when name is entered
-const nameInput = document.getElementById('name-input');
-const startBtn = document.getElementById('start-btn');
-nameInput.addEventListener('input',()=>{
-  if(nameInput.value.trim().length>0) startBtn.classList.add('active');
-  else startBtn.classList.remove('active');
-});
-nameInput.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&nameInput.value.trim()) startBtn.click();
-});
+let idx=-1, mode='float';
+let forceX=0, forceY=0;
 
-// Listen to screen mode
-onValue(ref(db,'screenMode'),snap=>{
-  const currentMode=snap.val()||'shake';
-  const display=document.getElementById('mode-display');
-  const label=document.getElementById('input-label');
-  if(currentMode==='wordcloud'){
-    display.textContent='📝 Word Cloud — type a word!';
-    label.textContent='Enter a word or short phrase';
-  } else if(currentMode==='qa'){
-    display.textContent='❓ Q&A — ask your question!';
-    label.textContent='Type your question';
-  } else if(currentMode==='free'){
-    display.textContent='💬 Free mode — words & questions welcome';
-    label.textContent='Type anything';
-  } else {
-    display.textContent='🔋 Tap the circle to power up!';
-    label.textContent='Tap the energy button above!';
-  }
+// Build progress dots
+const progressEl=document.getElementById('progress');
+agenda.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot';
+  progressEl.appendChild(d);
 });
 
-// Send text
-function sendText(){
-  const input=document.getElementById('text-input');
-  const text=input.value.trim();
-  if(!text)return;
-  get(ref(db,'screenMode')).then(snap=>{
-    const mode=snap.val()||'shake';
-    if(mode==='qa'){
-      push(ref(db,'questions'),{text:text, name:myName, time:Date.now()});
-    } else {
-      const color=colors[Math.floor(Math.random()*colors.length)];
-      push(ref(db,'words'),{text:text, name:myName, color:color, time:Date.now()});
-    }
+function updateProgress(){
+  document.querySelectorAll('.dot').forEach((d,i)=>{
+    d.className='dot';
+    if(i<idx) d.classList.add('done');
+    if(i===idx) d.classList.add('active');
   });
-  input.value='';
 }
 
-document.getElementById('send-btn').addEventListener('click',sendText);
-document.getElementById('text-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter')sendText();
+// === CANVAS ===
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H;
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
+resize();window.onresize=resize;
+
+const particles=Array.from({length:120},()=>({
+  x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+  vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,r:Math.random()*2+0.5
+}));
+
+// === FIREBASE LISTENERS ===
+onValue(ref(db,'players'),snap=>{
+  const data=snap.val()||{};
+  const players=Object.values(data);
+  document.getElementById('count').textContent=players.length;
+  forceX=0;forceY=0;
+  players.forEach(p=>{forceX+=p.x||0;forceY+=p.y||0;});
+  forceX/=Math.max(players.length,1);
+  forceY/=Math.max(players.length,1);
 });
 
-// Emoji reactions
-document.querySelectorAll('.emoji-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    push(ref(db,'reactions'),{emoji:btn.dataset.emoji, name:myName, time:Date.now()});
+onValue(ref(db,'energy'),snap=>{
+  const val=snap.val()||0;
+  document.getElementById('energy-bar').style.width=val+'%';
+  if(val>=100){next();setTimeout(()=>set(ref(db,'energy'),0),500);}
+});
+
+onChildAdded(ref(db,'words'),snap=>{
+  const word=snap.val();
+  if(!word||!word.text)return;
+  showWord(word.text,word.color||'#0ff');
+});
+
+onChildAdded(ref(db,'reactions'),snap=>{
+  const r=snap.val();
+  if(!r)return;
+  showReaction(r.emoji);
+});
+
+onChildAdded(ref(db,'questions'),snap=>{
+  const q=snap.val();
+  if(!q||!q.text)return;
+  showQuestion(q.text);
+});
+
+onValue(ref(db,'screenMode'),snap=>{
+  const val=snap.val()||'shake';
+  document.getElementById('mode-indicator').textContent=
+    val==='wordcloud'?'📝 WORD CLOUD':
+    val==='qa'?'❓ Q&A':
+    val==='free'?'💬 FREE':'🔋 SHAKE TO UNLOCK';
+});
+
+// === FUNCTIONS ===
+function next(){
+  if(idx>=agenda.length-1)return;
+  idx++;
+  const el=document.getElementById('topic');
+  const sub=document.getElementById('subtitle');
+  const num=document.getElementById('slide-number');
+  el.classList.remove('show');
+  sub.classList.remove('show');
+  mode='gather';
+  setTimeout(()=>{
+    el.textContent=agenda[idx].title;
+    sub.textContent=agenda[idx].subtitle;
+    num.textContent=(idx+1)+' / '+agenda.length;
+    el.classList.add('show');
+    sub.classList.add('show');
+    updateProgress();
+  },400);
+  setTimeout(()=>mode='float',1500);
+}
+
+function showWord(text,color){
+  const el=document.createElement('div');
+  el.className='word';
+  el.textContent=text;
+  el.style.left=Math.random()*60+20+'%';
+  el.style.top=Math.random()*50+25+'%';
+  el.style.fontSize=(Math.random()*1.2+1)+'rem';
+  el.style.color=color;
+  el.style.transform=`rotate(${Math.random()*16-8}deg)`;
+  document.getElementById('wordcloud').appendChild(el);
+  setTimeout(()=>el.classList.add('show'),50);
+  setTimeout(()=>el.remove(),25000);
+}
+
+function showReaction(emoji){
+  const el=document.createElement('div');
+  el.className='reaction';
+  el.textContent=emoji;
+  el.style.left=Math.random()*80+10+'%';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+function showQuestion(text){
+  const container=document.getElementById('questions');
+  const card=document.createElement('div');
+  card.className='question-card';
+  card.innerHTML=`<div class="q-label">Anonymous Question</div>${text}`;
+  container.appendChild(card);
+  while(container.children.length>5){container.firstChild.remove();}
+}
+
+function reboot(){
+  set(ref(db,'energy'),0);
+  set(ref(db,'players'),null);
+  set(ref(db,'words'),null);
+  set(ref(db,'reactions'),null);
+  set(ref(db,'questions'),null);
+  document.getElementById('count').textContent='0';
+  document.getElementById('energy-bar').style.width='0%';
+  document.getElementById('wordcloud').innerHTML='';
+  document.getElementById('questions').innerHTML='';
+  idx=-1;
+  document.getElementById('topic').classList.remove('show');
+  document.getElementById('subtitle').classList.remove('show');
+  document.getElementById('slide-number').textContent='';
+  updateProgress();
+}
+
+// === DRAW (subtle background) ===
+function draw(){
+  ctx.fillStyle='rgba(10,10,26,0.08)';
+  ctx.fillRect(0,0,W,H);
+  particles.forEach(p=>{
+    p.vx+=forceX*0.08;p.vy+=forceY*0.08;
+    if(mode==='gather'){p.vx+=(W/2-p.x)*.002;p.vy+=(H/2-p.y)*.002;}
+    p.vx*=.98;p.vy*=.98;p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;
+    if(p.y<0||p.y>H)p.vy*=-1;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,255,255,0.4)';ctx.fill();
   });
-});
-
-// Tap to energize
-document.getElementById('tap-btn').addEventListener('click',async()=>{
-  if(Date.now()-lastTap<250)return;
-  lastTap=Date.now();
-  const snap=await get(ref(db,'energy'));
-  const cur=snap.val()||0;
-  if(cur<100) set(ref(db,'energy'),Math.min(cur+3,100));
-});
-
-// Join
-startBtn.addEventListener('click',async()=>{
-  myName=nameInput.value.trim();
-  if(!myName)return;
-
-  if(typeof DeviceOrientationEvent!=='undefined'
-     && typeof DeviceOrientationEvent.requestPermission==='function'){
-    try{await DeviceOrientationEvent.requestPermission();}catch(e){}
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=dx*dx+dy*dy;
+      if(d<4000){
+        ctx.strokeStyle=`rgba(0,255,255,${.15*(1-d/4000)})`;ctx.lineWidth=.4;
+        ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();
+      }
+    }
   }
+  requestAnimationFrame(draw);
+}
+draw();
 
-  document.getElementById('join-screen').classList.add('hidden');
-  document.getElementById('main').classList.remove('hidden');
-  document.getElementById('display-name').textContent=myName;
-
-  // Register player with name
-  set(myRef,{x:0, y:0, name:myName});
-
-  // Tilt
-  window.addEventListener('deviceorientation',e=>{
-    let tx=Math.max(-1,Math.min(1,(e.gamma||0)/30));
-    let ty=Math.max(-1,Math.min(1,((e.beta||0)-40)/30));
-    set(myRef,{x:tx, y:ty, name:myName});
-  });
+// === KEYBOARD ===
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')next();
+  if(e.key==='r'||e.key==='R')reboot();
+  if(e.key==='1')set(ref(db,'screenMode'),'wordcloud');
+  if(e.key==='2')set(ref(db,'screenMode'),'qa');
+  if(e.key==='3')set(ref(db,'screenMode'),'free');
+  if(e.key==='0')set(ref(db,'screenMode'),'shake');
 });
 </script>
 </body>
