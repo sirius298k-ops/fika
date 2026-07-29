@@ -5,19 +5,19 @@
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#0a0a1a;overflow:hidden;font-family:'Arial',sans-serif}
 
-  /* Slide style */
-  #slide{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-         width:80vw;max-width:900px;background:rgba(255,255,255,0.03);
+  /* Slide - made narrower and lower z-index */
+  #slide{position:fixed;top:50%;left:45%;transform:translate(-50%,-50%);
+         width:55vw;max-width:650px;background:rgba(255,255,255,0.03);
          border:1px solid rgba(0,255,255,0.15);border-radius:20px;
-         padding:60px 80px;text-align:center;z-index:5;
+         padding:50px 60px;text-align:center;z-index:2;
          backdrop-filter:blur(5px);box-shadow:0 0 60px rgba(0,255,255,0.05)}
   #slide-number{position:absolute;top:20px;right:30px;color:rgba(0,255,255,0.3);
                 font:12px monospace}
-  #topic{color:#fff;font-size:2.8rem;font-weight:bold;
+  #topic{color:#fff;font-size:2.2rem;font-weight:bold;
          text-shadow:0 0 20px rgba(0,255,255,0.3);
          transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px)}
   #topic.show{opacity:1;transform:translateY(0)}
-  #subtitle{color:rgba(0,255,255,0.6);font-size:1.1rem;margin-top:15px;
+  #subtitle{color:rgba(0,255,255,0.6);font-size:1rem;margin-top:15px;
             transition:opacity .6s;opacity:0}
   #subtitle.show{opacity:1}
 
@@ -27,44 +27,45 @@
                   color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
 
   /* Energy bar */
-  #energy-wrap{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);
+  #energy-wrap{position:fixed;bottom:50px;left:45%;transform:translateX(-50%);
                text-align:center;z-index:5}
   #energy-label{color:rgba(0,255,255,0.4);font:11px monospace;margin-bottom:6px}
-  #energy{width:300px;height:6px;background:#111;border-radius:3px;
+  #energy{width:250px;height:6px;background:#111;border-radius:3px;
           box-shadow:0 0 10px rgba(0,255,255,0.1)}
   #energy-bar{height:100%;width:0%;background:linear-gradient(90deg,#0ff,#f0f);
               border-radius:3px;transition:width .2s}
 
-  /* Word Cloud */
-  #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3}
+  /* Word Cloud - above slide */
+  #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6}
   .word{position:absolute;color:#fff;font-weight:bold;opacity:0;
         transition:opacity 1s,transform 1.5s;text-shadow:0 0 10px currentColor}
   .word.show{opacity:1}
 
-  /* Reactions */
-  .reaction{position:fixed;font-size:2.2rem;bottom:-50px;z-index:6;
+  /* Reactions - highest z-index */
+  .reaction{position:fixed;font-size:2.2rem;bottom:-50px;z-index:20;
             animation:floatUp 3s ease-out forwards;pointer-events:none}
   @keyframes floatUp{
     0%{bottom:-50px;opacity:1;transform:scale(1)}
     100%{bottom:110vh;opacity:0;transform:scale(1.5)}
   }
 
-  /* Questions */
-  #questions{position:fixed;top:80px;right:30px;width:320px;z-index:8;
+  /* Questions - on the right, above slide */
+  #questions{position:fixed;top:80px;right:30px;width:300px;z-index:8;
              display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:hidden}
   .question-card{background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
                  border-radius:12px;padding:14px 18px;color:#fff;font-size:0.9rem;
                  backdrop-filter:blur(5px);animation:slideIn .5s ease-out;
                  box-shadow:0 0 15px rgba(0,255,255,0.05)}
   @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
-  .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;text-transform:uppercase;letter-spacing:1px}
+  .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;
+                           text-transform:uppercase;letter-spacing:1px}
 
   /* Bottom instruction */
   #instruction{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
                color:rgba(0,255,255,0.25);font:11px monospace;z-index:5}
 
   /* Progress dots */
-  #progress{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  #progress{position:fixed;bottom:90px;left:45%;transform:translateX(-50%);
             display:flex;gap:8px;z-index:5}
   .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,255,255,0.2);
        transition:background .3s,transform .3s}
@@ -91,13 +92,13 @@
   <div id="energy"><div id="energy-bar"></div></div>
 </div>
 
-<div id="instruction">→ next | R reboot | 1 wordcloud | 2 Q&A | 3 free | 0 shake</div>
+<div id="instruction">→ next | R reboot | 1 wordcloud | 2 Q&A | 3 free | 0 energy</div>
 
 <canvas id="c"></canvas>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, onChildAdded }
+import { getDatabase, ref, onValue, set, onChildAdded, query, orderByChild, startAt }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -114,13 +115,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// === AGENDA ===
+// Only show data created AFTER page load (prevents replaying old data)
+const pageLoadTime = Date.now();
+
 const agenda = [
   { title:"Welcome to Fika ☕", subtitle:"Scan QR to join with your phone" },
   { title:"What does Digital Manufacturing mean to you?", subtitle:"💭 Share a word on your phone" },
   { title:"Digital Twin in Practice", subtitle:"🏭 From concept to production floor" },
   { title:"Predictive → Prescriptive", subtitle:"🔮 The next evolution" },
-  { title:"Your Questions", subtitle:"❓ Ask anonymously from your phone" },
+  { title:"Your Questions", subtitle:"❓ Ask from your phone" },
   { title:"Key Takeaways", subtitle:"🎯 One word to remember" },
   { title:"Thank you! 🎉", subtitle:"" }
 ];
@@ -128,9 +131,9 @@ const agenda = [
 let idx=-1, mode='float';
 let forceX=0, forceY=0;
 
-// Build progress dots
+// Progress dots
 const progressEl=document.getElementById('progress');
-agenda.forEach((_,i)=>{
+agenda.forEach(()=>{
   const d=document.createElement('div');
   d.className='dot';
   progressEl.appendChild(d);
@@ -144,7 +147,7 @@ function updateProgress(){
   });
 }
 
-// === CANVAS ===
+// Canvas
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H;
@@ -157,6 +160,8 @@ const particles=Array.from({length:120},()=>({
 }));
 
 // === FIREBASE LISTENERS ===
+
+// Players
 onValue(ref(db,'players'),snap=>{
   const data=snap.val()||{};
   const players=Object.values(data);
@@ -167,30 +172,44 @@ onValue(ref(db,'players'),snap=>{
   forceY/=Math.max(players.length,1);
 });
 
+// Energy
 onValue(ref(db,'energy'),snap=>{
   const val=snap.val()||0;
   document.getElementById('energy-bar').style.width=val+'%';
   if(val>=100){next();setTimeout(()=>set(ref(db,'energy'),0),500);}
 });
 
+// Words
 onChildAdded(ref(db,'words'),snap=>{
   const word=snap.val();
   if(!word||!word.text)return;
-  showWord(word.text, word.color||'#0ff', word.name||'Anonymous');
+  if(word.time && word.time < pageLoadTime) return; // skip old
+  showWord(word.text, word.color||'#0ff', word.name||'');
 });
 
+// Reactions - THIS IS THE FIX
+onChildAdded(ref(db,'reactions'),snap=>{
+  const r=snap.val();
+  if(!r||!r.emoji)return;
+  if(r.time && r.time < pageLoadTime) return; // skip old
+  showReaction(r.emoji, r.name||'');
+});
+
+// Questions
 onChildAdded(ref(db,'questions'),snap=>{
   const q=snap.val();
   if(!q||!q.text)return;
+  if(q.time && q.time < pageLoadTime) return; // skip old
   showQuestion(q.text, q.name||'Anonymous');
 });
 
+// Screen mode
 onValue(ref(db,'screenMode'),snap=>{
   const val=snap.val()||'shake';
   document.getElementById('mode-indicator').textContent=
     val==='wordcloud'?'📝 WORD CLOUD':
     val==='qa'?'❓ Q&A':
-    val==='free'?'💬 FREE':'🔋 SHAKE TO UNLOCK';
+    val==='free'?'💬 FREE':'🔋 ENERGY';
 });
 
 // === FUNCTIONS ===
@@ -214,12 +233,13 @@ function next(){
   setTimeout(()=>mode='float',1500);
 }
 
-function showWord(text,color,name){
+function showWord(text, color, name){
   const el=document.createElement('div');
   el.className='word';
-  el.innerHTML=`${text} <span style="font-size:0.6em;opacity:0.5">— ${name}</span>`;
-  el.style.left=Math.random()*60+20+'%';
-  el.style.top=Math.random()*50+25+'%';
+  const nameTag=name?` <span style="font-size:0.55em;opacity:0.4">— ${name}</span>`:'';
+  el.innerHTML=text+nameTag;
+  el.style.left=Math.random()*50+5+'%';
+  el.style.top=Math.random()*50+20+'%';
   el.style.fontSize=(Math.random()*1.2+1)+'rem';
   el.style.color=color;
   el.style.transform=`rotate(${Math.random()*16-8}deg)`;
@@ -228,7 +248,7 @@ function showWord(text,color,name){
   setTimeout(()=>el.remove(),25000);
 }
 
-function showReaction(emoji){
+function showReaction(emoji, name){
   const el=document.createElement('div');
   el.className='reaction';
   el.textContent=emoji;
@@ -237,7 +257,7 @@ function showReaction(emoji){
   setTimeout(()=>el.remove(),3500);
 }
 
-function showQuestion(text,name){
+function showQuestion(text, name){
   const container=document.getElementById('questions');
   const card=document.createElement('div');
   card.className='question-card';
@@ -263,7 +283,7 @@ function reboot(){
   updateProgress();
 }
 
-// === DRAW (subtle background) ===
+// === DRAW ===
 function draw(){
   ctx.fillStyle='rgba(10,10,26,0.08)';
   ctx.fillRect(0,0,W,H);
