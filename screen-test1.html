@@ -176,19 +176,13 @@ onValue(ref(db,'energy'),snap=>{
 onChildAdded(ref(db,'words'),snap=>{
   const word=snap.val();
   if(!word||!word.text)return;
-  showWord(word.text,word.color||'#0ff');
-});
-
-onChildAdded(ref(db,'reactions'),snap=>{
-  const r=snap.val();
-  if(!r)return;
-  showReaction(r.emoji);
+  showWord(word.text, word.color||'#0ff', word.name||'Anonymous');
 });
 
 onChildAdded(ref(db,'questions'),snap=>{
   const q=snap.val();
   if(!q||!q.text)return;
-  showQuestion(q.text);
+  showQuestion(q.text, q.name||'Anonymous');
 });
 
 onValue(ref(db,'screenMode'),snap=>{
@@ -220,10 +214,10 @@ function next(){
   setTimeout(()=>mode='float',1500);
 }
 
-function showWord(text,color){
+function showWord(text,color,name){
   const el=document.createElement('div');
   el.className='word';
-  el.textContent=text;
+  el.innerHTML=`${text} <span style="font-size:0.6em;opacity:0.5">— ${name}</span>`;
   el.style.left=Math.random()*60+20+'%';
   el.style.top=Math.random()*50+25+'%';
   el.style.fontSize=(Math.random()*1.2+1)+'rem';
@@ -243,11 +237,11 @@ function showReaction(emoji){
   setTimeout(()=>el.remove(),3500);
 }
 
-function showQuestion(text){
+function showQuestion(text,name){
   const container=document.getElementById('questions');
   const card=document.createElement('div');
   card.className='question-card';
-  card.innerHTML=`<div class="q-label">Anonymous Question</div>${text}`;
+  card.innerHTML=`<div class="q-label">Question from ${name}</div>${text}`;
   container.appendChild(card);
   while(container.children.length>5){container.firstChild.remove();}
 }
