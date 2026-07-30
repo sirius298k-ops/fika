@@ -5,7 +5,6 @@
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#0a0a1a;overflow:hidden;font-family:'Arial',sans-serif}
 
-  /* Slide - made narrower and lower z-index */
   #slide{position:fixed;top:50%;left:45%;transform:translate(-50%,-50%);
          width:55vw;max-width:650px;background:rgba(255,255,255,0.03);
          border:1px solid rgba(0,255,255,0.15);border-radius:20px;
@@ -13,20 +12,21 @@
          backdrop-filter:blur(5px);box-shadow:0 0 60px rgba(0,255,255,0.05)}
   #slide-number{position:absolute;top:20px;right:30px;color:rgba(0,255,255,0.3);
                 font:12px monospace}
-  #topic{color:#fff;font-size:2.2rem;font-weight:bold;
+  #topic{color:#fff;font-size:2rem;font-weight:bold;
          text-shadow:0 0 20px rgba(0,255,255,0.3);
-         transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px)}
+         transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px);line-height:1.4}
   #topic.show{opacity:1;transform:translateY(0)}
-  #subtitle{color:rgba(0,255,255,0.6);font-size:1rem;margin-top:15px;
+  #subtitle{color:rgba(0,255,255,0.6);font-size:0.9rem;margin-top:15px;
             transition:opacity .6s;opacity:0}
   #subtitle.show{opacity:1}
+  #speaker{color:rgba(255,200,0,0.6);font-size:0.75rem;margin-top:10px;
+           transition:opacity .6s;opacity:0;text-transform:uppercase;letter-spacing:1px}
+  #speaker.show{opacity:1}
 
-  /* Info bar */
   #info{position:fixed;top:20px;left:30px;color:#0ff;font:13px monospace;z-index:10;opacity:0.6}
   #mode-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);
                   color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
 
-  /* Energy bar */
   #energy-wrap{position:fixed;bottom:50px;left:45%;transform:translateX(-50%);
                text-align:center;z-index:5}
   #energy-label{color:rgba(0,255,255,0.4);font:11px monospace;margin-bottom:6px}
@@ -35,13 +35,11 @@
   #energy-bar{height:100%;width:0%;background:linear-gradient(90deg,#0ff,#f0f);
               border-radius:3px;transition:width .2s}
 
-  /* Word Cloud - above slide */
   #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6}
   .word{position:absolute;color:#fff;font-weight:bold;opacity:0;
         transition:opacity 1s,transform 1.5s;text-shadow:0 0 10px currentColor}
   .word.show{opacity:1}
 
-  /* Reactions - highest z-index */
   .reaction{position:fixed;font-size:2.2rem;bottom:-50px;z-index:20;
             animation:floatUp 3s ease-out forwards;pointer-events:none}
   @keyframes floatUp{
@@ -49,7 +47,6 @@
     100%{bottom:110vh;opacity:0;transform:scale(1.5)}
   }
 
-  /* Questions - on the right, above slide */
   #questions{position:fixed;top:80px;right:30px;width:300px;z-index:8;
              display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:hidden}
   .question-card{background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
@@ -60,14 +57,12 @@
   .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;
                            text-transform:uppercase;letter-spacing:1px}
 
-  /* Bottom instruction */
   #instruction{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
                color:rgba(0,255,255,0.25);font:11px monospace;z-index:5}
 
-  /* Progress dots */
   #progress{position:fixed;bottom:90px;left:45%;transform:translateX(-50%);
-            display:flex;gap:8px;z-index:5}
-  .dot{width:8px;height:8px;border-radius:50%;background:rgba(0,255,255,0.2);
+            display:flex;gap:6px;z-index:5}
+  .dot{width:7px;height:7px;border-radius:50%;background:rgba(0,255,255,0.2);
        transition:background .3s,transform .3s}
   .dot.active{background:#0ff;transform:scale(1.4);box-shadow:0 0 10px #0ff}
   .dot.done{background:rgba(0,255,255,0.5)}
@@ -81,6 +76,7 @@
   <div id="slide-number"></div>
   <div id="topic"></div>
   <div id="subtitle"></div>
+  <div id="speaker"></div>
 </div>
 
 <div id="progress"></div>
@@ -98,7 +94,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, onChildAdded, query, orderByChild, startAt }
+import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -114,18 +110,67 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
-// Only show data created AFTER page load (prevents replaying old data)
 const pageLoadTime = Date.now();
 
+// === AGENDA ===
 const agenda = [
-  { title:"Welcome to Fika ☕", subtitle:"Scan QR to join with your phone" },
-  { title:"What does Digital Manufacturing mean to you?", subtitle:"💭 Share a word on your phone" },
-  { title:"Digital Twin in Practice", subtitle:"🏭 From concept to production floor" },
-  { title:"Predictive → Prescriptive", subtitle:"🔮 The next evolution" },
-  { title:"Your Questions", subtitle:"❓ Ask from your phone" },
-  { title:"Key Takeaways", subtitle:"🎯 One word to remember" },
-  { title:"Thank you! 🎉", subtitle:"" }
+  {
+    title: "Welcome to Fika ☕",
+    subtitle: "Scan QR code to join",
+    speaker: ""
+  },
+  {
+    title: "What's one thing Stuart must experience while he's in China?",
+    subtitle: "💭 Type a word on your phone!"
+  },
+  {
+    title: "What surprised you the most after touring today?",
+    subtitle: "First impressions from a first-time visitor"
+  },
+  {
+    title: "Share a pilot that didn't scale",
+    subtitle: "What went wrong? What did you learn?"
+  },
+  {
+    title: "Beyond the headline KPIs",
+    subtitle: "Output +55%, lead time -44%... but what do you really measure?"
+  },
+  {
+    title: "Agentic AI in GMP",
+    subtitle: "Where would you let AI execute autonomously — and where never?"
+  },
+  {
+    title: "Choosing tech partners",
+    subtitle: "Top 3 criteria? A success story?"
+  },
+  {
+    title: "IT meets OT",
+    subtitle: "Digital Twin & Edge demand convergence. The hardest part isn't tech — it's..."
+  },
+  {
+    title: "$15B China investment × Smart → Intelligent",
+    subtitle: "How should site-level teams start? What's your principle?"
+  },
+  {
+    title: "DCO: 120+ lines · 17 sites · 3 months",
+    subtitle: "🏆 2025 Tulip Greenhouse Award — What made this speed possible?"
+  },
+  {
+    title: "Lean is subtraction. Digital is addition.",
+    subtitle: "How do you balance? How do you judge?"
+  },
+  {
+    title: "❓ Your Questions",
+    subtitle: "Ask from your phone"
+  },
+  {
+    title: "🎯 Key Takeaways",
+    subtitle: "One word to remember from today"
+  },
+  {
+    title: "Thank you! 🎉",
+    subtitle: "Stuart, welcome to China."
+  }
 ];
 
 let idx=-1, mode='float';
@@ -160,8 +205,6 @@ const particles=Array.from({length:120},()=>({
 }));
 
 // === FIREBASE LISTENERS ===
-
-// Players
 onValue(ref(db,'players'),snap=>{
   const data=snap.val()||{};
   const players=Object.values(data);
@@ -172,38 +215,33 @@ onValue(ref(db,'players'),snap=>{
   forceY/=Math.max(players.length,1);
 });
 
-// Energy
 onValue(ref(db,'energy'),snap=>{
   const val=snap.val()||0;
   document.getElementById('energy-bar').style.width=val+'%';
   if(val>=100){next();setTimeout(()=>set(ref(db,'energy'),0),500);}
 });
 
-// Words
 onChildAdded(ref(db,'words'),snap=>{
   const word=snap.val();
   if(!word||!word.text)return;
-  if(word.time && word.time < pageLoadTime) return; // skip old
+  if(word.time && word.time < pageLoadTime) return;
   showWord(word.text, word.color||'#0ff', word.name||'');
 });
 
-// Reactions - THIS IS THE FIX
 onChildAdded(ref(db,'reactions'),snap=>{
   const r=snap.val();
   if(!r||!r.emoji)return;
-  if(r.time && r.time < pageLoadTime) return; // skip old
-  showReaction(r.emoji, r.name||'');
+  if(r.time && r.time < pageLoadTime) return;
+  showReaction(r.emoji);
 });
 
-// Questions
 onChildAdded(ref(db,'questions'),snap=>{
   const q=snap.val();
   if(!q||!q.text)return;
-  if(q.time && q.time < pageLoadTime) return; // skip old
+  if(q.time && q.time < pageLoadTime) return;
   showQuestion(q.text, q.name||'Anonymous');
 });
 
-// Screen mode
 onValue(ref(db,'screenMode'),snap=>{
   const val=snap.val()||'shake';
   document.getElementById('mode-indicator').textContent=
@@ -218,16 +256,20 @@ function next(){
   idx++;
   const el=document.getElementById('topic');
   const sub=document.getElementById('subtitle');
+  const spk=document.getElementById('speaker');
   const num=document.getElementById('slide-number');
   el.classList.remove('show');
   sub.classList.remove('show');
+  spk.classList.remove('show');
   mode='gather';
   setTimeout(()=>{
     el.textContent=agenda[idx].title;
     sub.textContent=agenda[idx].subtitle;
+    spk.textContent=agenda[idx].speaker?'↪ '+agenda[idx].speaker:'';
     num.textContent=(idx+1)+' / '+agenda.length;
     el.classList.add('show');
     sub.classList.add('show');
+    if(agenda[idx].speaker) spk.classList.add('show');
     updateProgress();
   },400);
   setTimeout(()=>mode='float',1500);
@@ -248,7 +290,7 @@ function showWord(text, color, name){
   setTimeout(()=>el.remove(),25000);
 }
 
-function showReaction(emoji, name){
+function showReaction(emoji){
   const el=document.createElement('div');
   el.className='reaction';
   el.textContent=emoji;
@@ -279,6 +321,7 @@ function reboot(){
   idx=-1;
   document.getElementById('topic').classList.remove('show');
   document.getElementById('subtitle').classList.remove('show');
+  document.getElementById('speaker').classList.remove('show');
   document.getElementById('slide-number').textContent='';
   updateProgress();
 }
@@ -313,6 +356,7 @@ draw();
 // === KEYBOARD ===
 document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight')next();
+  if(e.key==='ArrowLeft'&&idx>0){idx-=2;next();}  // go back
   if(e.key==='r'||e.key==='R')reboot();
   if(e.key==='1')set(ref(db,'screenMode'),'wordcloud');
   if(e.key==='2')set(ref(db,'screenMode'),'qa');
