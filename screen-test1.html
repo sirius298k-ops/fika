@@ -199,7 +199,7 @@ let W,H;
 function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
 resize();window.onresize=resize;
 
-const particles=Array.from({length:250},()=>({
+const particles=Array.from({length:120},()=>({
   x:Math.random()*innerWidth,y:Math.random()*innerHeight,
   vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,r:Math.random()*2+0.5
 }));
@@ -342,7 +342,7 @@ function draw(){
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
       const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=dx*dx+dy*dy;
-      if(d<6000){
+      if(d<8000){
         ctx.strokeStyle=`rgba(0,255,255,${.15*(1-d/4000)})`;ctx.lineWidth=.4;
         ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);
         ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();
