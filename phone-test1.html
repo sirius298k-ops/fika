@@ -172,7 +172,7 @@ document.getElementById('tap-btn').addEventListener('click',async()=>{
   lastTap=Date.now();
   const snap=await get(ref(db,'energy'));
   const cur=snap.val()||0;
-  if(cur<100) set(ref(db,'energy'),Math.min(cur+3,100));
+  if(cur<100) set(ref(db,'energy'),Math.min(cur+10,100));
 });
 
 // Join button
