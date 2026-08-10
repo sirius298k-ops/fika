@@ -5,7 +5,7 @@
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#0a0a1a;overflow:hidden;font-family:'Arial',sans-serif}
 
-#slide{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  #slide{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
          width:55vw;max-width:650px;background:rgba(255,255,255,0.03);
          border:1px solid rgba(0,255,255,0.15);border-radius:20px;
          padding:50px 60px;text-align:center;z-index:2;
@@ -17,7 +17,7 @@
          text-shadow:0 0 20px rgba(0,255,255,0.3);
          transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px);line-height:1.5}
   #topic.show{opacity:1;transform:translateY(0)}
-  #subtitle{color:rgba(0,255,255,0.6);font-size:1.2rem;margin-top:15px;
+  #subtitle{color:rgba(0,255,255,0.6);font-size:0.9rem;margin-top:15px;
             transition:opacity .6s;opacity:0}
   #subtitle.show{opacity:1}
 
@@ -28,14 +28,13 @@
   #energy-wrap{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);
                text-align:center;z-index:5}
   #energy-label{color:rgba(0,255,255,0.4);font:11px monospace;margin-bottom:6px}
-  #energy{width:250px;height:6px;background:#111;border-radius:3px;
-          box-shadow:0 0 10px rgba(0,255,255,0.1)}
+  #energy{width:250px;height:6px;background:#111;border-radius:3px}
   #energy-bar{height:100%;width:0%;background:linear-gradient(90deg,#0ff,#f0f);
               border-radius:3px;transition:width .2s}
 
   #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6}
   .word{position:absolute;color:#fff;font-weight:bold;opacity:0;
-        transition:opacity 1s,transform 1.5s;text-shadow:0 0 10px currentColor}
+        transition:opacity 1s;text-shadow:0 0 10px currentColor}
   .word.show{opacity:1}
 
   .reaction{position:fixed;font-size:2.2rem;bottom:-50px;z-index:20;
@@ -85,7 +84,6 @@
 </div>
 
 <div id="instruction">→ next | ← back | R reboot | 1 wordcloud | 2 Q&A | 3 free | 0 energy</div>
-
 <canvas id="c"></canvas>
 
 <script type="module">
@@ -110,22 +108,104 @@ const pageLoadTime = Date.now();
 
 // === AGENDA ===
 const agenda = [
-  { title: "", subtitle: "", blank: true },
-  { title: "Welcome to Today's Fika ☕", subtitle: "", blank: false },
-  { title: "Meet Our Guest!", subtitle: "Who are you, what do you do — and one fun fact?", blank: false },
-  { title: "Welcome! How's Taizhou treating you so far?", subtitle: "", blank: false },
-  { title: "How does Lean Digital make autonomy real?", subtitle: "", blank: false },
-  { title: "What does IT need to do to make it work", subtitle: "", blank: false },
-  { title: "How has AI changed your Monday morning?", subtitle: "", blank: false },
-  { title: "What's the most valuable human skill in 2030?", subtitle: "", blank: false },
-  { title: "Where could AI act alone — and where could not?", subtitle: "", blank: false },
-  { title: "❓ Open Q&A", subtitle: "Ask anything from your phone", blank: false },
-  { title: "🎯 Key Takeaways", subtitle: "One word to remember", blank: false },
-  { title: "What should Stuart experience in China?", subtitle: "Be Bold", blank: false },
-  { title: "Thank you! 🎉", subtitle: "Mr.Stuart, Welcome to China.", blank: false }
+  { title:"", subtitle:"", blank:true },
+  { title:"Welcome to Today's Fika ☕", subtitle:"", blank:false },
+  { title:"Who are you, what do you do — and one fun fact?", subtitle:"", blank:false },
+  { title:"Welcome! How's Taizhou treating you so far?", subtitle:"", blank:false },
+  { title:"What impressed you most today?", subtitle:"", blank:false },
+  { title:"Any moment that felt different from Europe?", subtitle:"", blank:false },
+  { title:"How does Lean Digital make autonomy real?", subtitle:"", blank:false },
+  { title:"What does IT need to deliver for this to work?", subtitle:"", blank:false },
+  { title:"How has AI changed your Monday morning?", subtitle:"", blank:false },
+  { title:"What's the most valuable human skill in 2030?", subtitle:"", blank:false },
+  { title:"Where does AI act alone — and where does it not?", subtitle:"", blank:false },
+  { title:"❓ Open Q&A", subtitle:"Ask anything from your phone", blank:false },
+  { title:"🎯 Key Takeaways", subtitle:"One word to remember", blank:false },
+  { title:"What should Stuart experience in China?", subtitle:"", blank:false },
+  { title:"Thank you! 🎉", subtitle:"Stuart, welcome to China.", blank:false }
 ];
+
 let idx=-1, mode='float';
 let forceX=0, forceY=0;
+
+// === SHAPES ===
+// Each shape is a function that returns target {x, y} for particle i out of n total
+const shapes = [
+  // 0: Random scatter (default float)
+  (i, n, W, H) => ({
+    x: Math.random()*W,
+    y: Math.random()*H
+  }),
+  // 1: Circle
+  (i, n, W, H) => {
+    const angle = (i/n)*Math.PI*2;
+    const r = Math.min(W,H)*0.35;
+    return { x: W/2 + Math.cos(angle)*r, y: H/2 + Math.sin(angle)*r };
+  },
+  // 2: Spiral
+  (i, n, W, H) => {
+    const angle = (i/n)*Math.PI*8;
+    const r = (i/n)*Math.min(W,H)*0.4;
+    return { x: W/2 + Math.cos(angle)*r, y: H/2 + Math.sin(angle)*r };
+  },
+  // 3: Grid
+  (i, n, W, H) => {
+    const cols = Math.ceil(Math.sqrt(n));
+    const rows = Math.ceil(n/cols);
+    const col = i%cols;
+    const row = Math.floor(i/cols);
+    const padX = W*0.1, padY = H*0.1;
+    return {
+      x: padX + (col/(cols-1))*(W-padX*2),
+      y: padY + (row/(rows-1))*(H-padY*2)
+    };
+  },
+  // 4: Star
+  (i, n, W, H) => {
+    const points = 5;
+    const angle = (i/n)*Math.PI*2;
+    const spike = i%2===0 ? Math.min(W,H)*0.38 : Math.min(W,H)*0.18;
+    return { x: W/2 + Math.cos(angle)*spike, y: H/2 + Math.sin(angle)*spike };
+  },
+  // 5: Wave
+  (i, n, W, H) => {
+    const x = (i/n)*W;
+    const y = H/2 + Math.sin((i/n)*Math.PI*6)*H*0.25;
+    return { x, y };
+  },
+  // 6: Two circles
+  (i, n, W, H) => {
+    const half = Math.floor(n/2);
+    const inFirst = i < half;
+    const j = inFirst ? i : i-half;
+    const total = inFirst ? half : n-half;
+    const angle = (j/total)*Math.PI*2;
+    const r = Math.min(W,H)*0.22;
+    const cx = inFirst ? W*0.33 : W*0.67;
+    return { x: cx + Math.cos(angle)*r, y: H/2 + Math.sin(angle)*r };
+  },
+  // 7: Diamond
+  (i, n, W, H) => {
+    const angle = (i/n)*Math.PI*2;
+    const r = Math.min(W,H)*0.35;
+    const x = W/2 + Math.cos(angle)*r;
+    const y = H/2 + Math.sin(angle)*r*0.6;
+    return { x, y };
+  },
+  // 8: Explosion / burst
+  (i, n, W, H) => {
+    const angle = (i/n)*Math.PI*2 + Math.random()*0.3;
+    const r = Math.min(W,H)*(0.1 + Math.random()*0.4);
+    return { x: W/2 + Math.cos(angle)*r, y: H/2 + Math.sin(angle)*r };
+  }
+];
+
+let currentTargets = [];
+let transitioning = false;
+let transitionProgress = 0;
+let transitionFrom = [];
+let transitionTo = [];
+let flashAlpha = 0;
 
 // Progress dots
 const progressEl=document.getElementById('progress');
@@ -147,13 +227,39 @@ function updateProgress(){
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H;
-function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
+function resize(){
+  W=canvas.width=innerWidth;
+  H=canvas.height=innerHeight;
+}
 resize();window.onresize=resize;
 
-const particles=Array.from({length:150},()=>({
-  x:Math.random()*innerWidth,y:Math.random()*innerHeight,
-  vx:(Math.random()-.5)*0.6,vy:(Math.random()-.5)*0.6,r:Math.random()*2+0.5
+const N = 150;
+const particles = Array.from({length:N},()=>({
+  x: Math.random()*innerWidth,
+  y: Math.random()*innerHeight,
+  vx: (Math.random()-.5)*0.6,
+  vy: (Math.random()-.5)*0.6,
+  r: Math.random()*2+0.5,
+  tx: 0, ty: 0  // target position during shape transition
 }));
+
+// === SHAPE TRANSITION ===
+function triggerShapeTransition(){
+  // Pick a random shape (not scatter)
+  const shapeIdx = 1 + Math.floor(Math.random()*(shapes.length-1));
+  const shapeFn = shapes[shapeIdx];
+
+  // Save current positions as "from"
+  transitionFrom = particles.map(p=>({x:p.x, y:p.y}));
+
+  // Calculate target positions
+  transitionTo = particles.map((p,i)=>shapeFn(i, N, W, H));
+
+  // Flash effect
+  flashAlpha = 1.0;
+  transitioning = true;
+  transitionProgress = 0;
+}
 
 // === FIREBASE LISTENERS ===
 onValue(ref(db,'players'),snap=>{
@@ -213,9 +319,10 @@ function next(){
 
   el.classList.remove('show');
   sub.classList.remove('show');
-  mode='gather';
 
-  // Blank page — hide slide box
+  // Trigger shape transition on every page change
+  triggerShapeTransition();
+
   if(current.blank){
     slideEl.classList.add('no-border');
     num.textContent='';
@@ -233,7 +340,6 @@ function next(){
     }
     updateProgress();
   },400);
-  setTimeout(()=>mode='float',1500);
 }
 
 function showWord(text, color, name){
@@ -287,29 +393,92 @@ function reboot(){
   updateProgress();
 }
 
+// Easing function
+function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
 // === DRAW ===
 function draw(){
-  ctx.fillStyle='rgba(10,10,26,0.08)';
+  // Fade background
+  ctx.fillStyle='rgba(10,10,26,0.15)';
   ctx.fillRect(0,0,W,H);
+
+  // Flash effect on transition
+  if(flashAlpha>0){
+    ctx.fillStyle=`rgba(0,255,255,${flashAlpha*0.15})`;
+    ctx.fillRect(0,0,W,H);
+    flashAlpha=Math.max(0,flashAlpha-0.04);
+  }
+
+  // Update transition
+  if(transitioning){
+    transitionProgress=Math.min(1,transitionProgress+0.012);
+    const t=easeInOut(transitionProgress);
+
+    particles.forEach((p,i)=>{
+      const fx=transitionTo[i].x;
+      const fy=transitionTo[i].y;
+      const fromX=transitionFrom[i].x;
+      const fromY=transitionFrom[i].y;
+
+      // Move toward target
+      p.x=fromX+(fx-fromX)*t;
+      p.y=fromY+(fy-fromY)*t;
+
+      // Add slight wobble during transition
+      p.x+=Math.sin(Date.now()*0.003+i)*2*(1-t);
+      p.y+=Math.cos(Date.now()*0.003+i)*2*(1-t);
+    });
+
+    if(transitionProgress>=1){
+      transitioning=false;
+      // After shape, slowly drift back to float
+      setTimeout(()=>{
+        particles.forEach(p=>{
+          p.vx=(Math.random()-.5)*0.6;
+          p.vy=(Math.random()-.5)*0.6;
+        });
+        mode='float';
+      }, 2000);
+    }
+  } else {
+    // Normal float mode
+    particles.forEach(p=>{
+      p.vx+=forceX*0.03;
+      p.vy+=forceY*0.03;
+      p.vx*=.95;
+      p.vy*=.95;
+      p.x+=p.vx;
+      p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+    });
+  }
+
+  // Draw particles
   particles.forEach(p=>{
-    p.vx+=forceX*0.03;p.vy+=forceY*0.03;
-    if(mode==='gather'){p.vx+=(W/2-p.x)*.002;p.vy+=(H/2-p.y)*.002;}
-    p.vx*=.95;p.vy*=.95;p.x+=p.vx;p.y+=p.vy;
-    if(p.x<0||p.x>W)p.vx*=-1;
-    if(p.y<0||p.y>H)p.vy*=-1;
-    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle='rgba(0,255,255,0.4)';ctx.fill();
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,255,255,0.7)';
+    ctx.fill();
   });
+
+  // Draw connections
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
-      const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=dx*dx+dy*dy;
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const d=dx*dx+dy*dy;
       if(d<6000){
-        ctx.strokeStyle=`rgba(0,255,255,${.15*(1-d/6000)})`;ctx.lineWidth=.4;
-        ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);
-        ctx.lineTo(particles[j].x,particles[j].y);ctx.stroke();
+        ctx.strokeStyle=`rgba(0,255,255,${.2*(1-d/6000)})`;
+        ctx.lineWidth=.4;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.stroke();
       }
     }
   }
+
   requestAnimationFrame(draw);
 }
 draw();
@@ -323,6 +492,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='2')set(ref(db,'screenMode'),'qa');
   if(e.key==='3')set(ref(db,'screenMode'),'free');
   if(e.key==='0')set(ref(db,'screenMode'),'shake');
+  if(e.key===' ')triggerShapeTransition(); // spacebar manually triggers shape
 });
 </script>
 </body>
