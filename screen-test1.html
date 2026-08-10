@@ -150,9 +150,9 @@ let W,H;
 function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
 resize();window.onresize=resize;
 
-const particles=Array.from({length:250},()=>({
+const particles=Array.from({length:150},()=>({
   x:Math.random()*innerWidth,y:Math.random()*innerHeight,
-  vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,r:Math.random()*2+0.5
+  vx:(Math.random()-.5)*0.6,vy:(Math.random()-.5)*0.6,r:Math.random()*2+0.5
 }));
 
 // === FIREBASE LISTENERS ===
@@ -292,9 +292,9 @@ function draw(){
   ctx.fillStyle='rgba(10,10,26,0.08)';
   ctx.fillRect(0,0,W,H);
   particles.forEach(p=>{
-    p.vx+=forceX*0.08;p.vy+=forceY*0.08;
+    p.vx+=forceX*0.03;p.vy+=forceY*0.03;
     if(mode==='gather'){p.vx+=(W/2-p.x)*.002;p.vy+=(H/2-p.y)*.002;}
-    p.vx*=.98;p.vy*=.98;p.x+=p.vx;p.y+=p.vy;
+    p.vx*=.95;p.vy*=.95;p.x+=p.vx;p.y+=p.vy;
     if(p.x<0||p.x>W)p.vx*=-1;
     if(p.y<0||p.y>H)p.vy*=-1;
     ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
