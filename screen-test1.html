@@ -113,7 +113,7 @@ const agenda = [
   {
     title: "",
     subtitle: "",
-    blank: false
+    blank: true
   },
   {
     title: "Welcome to Today's Fika ☕",
@@ -382,7 +382,7 @@ setTimeout(()=>{
 
     // 播放音乐 — Thank You 页
     if(current.title.includes('Thank you')){
-      const audio = new Audio('BYE MU - Theoretical F1.mp3');
+      const audio = new Audio('F1.mp3');
       audio.volume = 0.4;
       audio.play().catch(e=>console.log('audio blocked:',e));
     }
