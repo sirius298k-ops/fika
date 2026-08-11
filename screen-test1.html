@@ -118,57 +118,52 @@ const agenda = [
   {
     title: "Welcome to Today's Fika ☕",
     subtitle: "",
-    blank: false
+    blank: true
   },
   {
     title: "Meet Our Guests!",
     subtitle: "Quick introductions, roles, and a fun fact.",
-    blank: false
+    blank: true
   },
   {
     title: "Scaling Digital Transformation",
     subtitle: "What drives success—and what separates scalable transformations from the rest?",
-    blank: false
+    blank: true
   },
   {
     title: "The Future of Autonomous Manufacturing",
     subtitle: "How will autonomy evolve, and what stands between digital initiatives and lasting value?",
-    blank: false
+    blank: true
   },
   {
     title: "AI，Life",
     subtitle: "How is AI already changing the way we work?",
-    blank: false
+    blank: true
   },
   {
     title: "The Human Edge in 2030",
     subtitle: "As AI takes on routine work, which human skill will matter most?",
-    blank: false
+    blank: true
   },
   {
     title: "AI Agents: Action vs. Control",
     subtitle: "Where should AI act autonomously, and where must humans stay in control?",
-    blank: false
+    blank: true
   },
   {
     title: "❓ Open Q&A",
     subtitle: "Ask anything from your phone！",
-    blank: false
+    blank: true
   },
   {
     title: "🎯 Key Takeaways",
     subtitle: "One word to remember",
-    blank: false
-  },
-  {
-    title: "What should Mr.Stuart experience in China?",
-    subtitle: "",
-    blank: false
+    blank: true
   },
   {
     title: "Thank you! 🎉",
-    subtitle: "Mr.Stuart, welcome to China.",
-    blank: false
+    subtitle: "",
+    blank: true
   }
 ];
 
@@ -382,7 +377,7 @@ if(idx===0){
     num.textContent='';
   } else {
     slideEl.classList.remove('no-border');
-    num.textContent=idx+' / '+(agenda.length-1);
+    num.textContent='';
   }
 
 setTimeout(()=>{
@@ -478,27 +473,29 @@ function draw(){
       p.x+=Math.sin(Date.now()*0.002+i*0.5)*1.5*(1-t);
       p.y+=Math.cos(Date.now()*0.002+i*0.5)*1.5*(1-t);
     });
-    if(transitionProgress>=1){
-      transitioning=false;
-      setTimeout(()=>{
-        particles.forEach(p=>{
-          p.vx=(Math.random()-.5)*0.6;
-          p.vy=(Math.random()-.5)*0.6;
-        });
-      },2500);
-    }
-  } else {
-    particles.forEach(p=>{
-      p.vx+=forceX*0.03;
-      p.vy+=forceY*0.03;
-      p.vx*=.95;
-      p.vy*=.95;
-      p.x+=p.vx;
-      p.y+=p.vy;
-      if(p.x<0||p.x>W)p.vx*=-1;
-      if(p.y<0||p.y>H)p.vy*=-1;
-    });
-  }
+  if(transitionProgress>=1){
+  transitioning=false;
+  // 形状形成后立即给每个粒子一个微小的随机速度，自然飘动
+  particles.forEach(p=>{
+    p.vx=(Math.random()-.5)*0.3;
+    p.vy=(Math.random()-.5)*0.3;
+  });
+}
+ } else {
+  particles.forEach(p=>{
+    p.vx+=forceX*0.03;
+    p.vy+=forceY*0.03;
+    // 极小的随机扰动，让粒子在形状上轻微颤动
+    p.vx+=(Math.random()-.5)*0.04;
+    p.vy+=(Math.random()-.5)*0.04;
+    p.vx*=.97;
+    p.vy*=.97;
+    p.x+=p.vx;
+    p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;
+    if(p.y<0||p.y>H)p.vy*=-1;
+  });
+}
 
   // Draw particles
   particles.forEach(p=>{
