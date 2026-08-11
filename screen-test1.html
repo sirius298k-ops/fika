@@ -301,8 +301,14 @@ function triggerShapeTransition(){
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
-}
-
+};
+function triggerSpecificShape(shapeIdx){
+  transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
+  transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
+  flashAlpha=1.0;
+  transitioning=true;
+  transitionProgress=0;
+};
 // === FIREBASE ===
 onValue(ref(db,'players'),snap=>{
   const data=snap.val()||{};
@@ -359,9 +365,17 @@ function next(){
   const sub=document.getElementById('subtitle');
   const num=document.getElementById('slide-number');
 
-  el.classList.remove('show');
-  sub.classList.remove('show');
-  triggerShapeTransition();
+el.classList.remove('show');
+sub.classList.remove('show');
+
+// 第一页固定无穷，最后一页固定爱心，其他随机
+if(idx===0){
+  triggerSpecificShape(8); // ∞ infinity
+} else if(agenda[idx].title.includes('Thank you')){
+  triggerSpecificShape(7); // ❤️ heart
+} else {
+  triggerShapeTransition(); // random
+}
 
   if(current.blank){
     slideEl.classList.add('no-border');
