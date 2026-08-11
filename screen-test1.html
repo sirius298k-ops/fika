@@ -371,7 +371,7 @@ function next(){
     num.textContent=idx+' / '+(agenda.length-1);
   }
 
-  setTimeout(()=>{
+setTimeout(()=>{
     el.textContent=current.title;
     sub.textContent=current.subtitle;
     if(!current.blank){
@@ -379,6 +379,13 @@ function next(){
       if(current.subtitle)sub.classList.add('show');
     }
     updateProgress();
+
+    // 播放音乐 — Thank You 页
+    if(current.title.includes('Thank you')){
+      const audio = new Audio('BYE MU - Theoretical F1.mp3');
+      audio.volume = 0.4;
+      audio.play().catch(e=>console.log('audio blocked:',e));
+    }
   },400);
 }
 
