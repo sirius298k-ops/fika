@@ -18,7 +18,7 @@
          transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px);
          line-height:1.6}
   #topic.show{opacity:1;transform:translateY(0)}
-  #subtitle{color:rgba(0,255,255,0.6);font-size:1.6rem;margin-top:20px;
+  #subtitle{color:rgba(0,255,255,0.6);font-size:0.95rem;margin-top:20px;
             line-height:1.8;transition:opacity .6s;opacity:0}
   #subtitle.show{opacity:1}
 
@@ -49,7 +49,9 @@
              display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:hidden}
   .question-card{background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
                 border-radius:12px;padding:14px 18px;color:#fff;font-size:0.9rem;
-                backdrop-filter:blur(5px);animation:slideIn .5s ease-out}
+                backdrop-filter:blur(5px);animation:slideIn .5s ease-out;
+                transition:opacity 1s}
+  .question-card.fading{opacity:0}
   @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
   .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;
                 text-transform:uppercase;letter-spacing:1px}
@@ -158,17 +160,31 @@ const agenda = [
 let idx=-1;
 let forceX=0, forceY=0;
 
+// === SLIDE BOX POSITION (for particle attraction) ===
+// We track the slide box center so particles can hover near it
+let slideCX = window.innerWidth/2;
+let slideCY = window.innerHeight/2;
+let slideW = 0;
+let slideH = 0;
+let attractToSlide = false; // activated after shape transition
+
+function updateSlideBox(){
+  const el = document.getElementById('slide');
+  const rect = el.getBoundingClientRect();
+  slideCX = rect.left + rect.width/2;
+  slideCY = rect.top + rect.height/2;
+  slideW = rect.width;
+  slideH = rect.height;
+}
+
 // === SHAPES ===
 const shapes = [
-  // 0: Scatter
   (i,n,W,H)=>({x:Math.random()*W, y:Math.random()*H}),
-  // 1: Spiral
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*8;
     const r=(i/n)*Math.min(W,H)*0.42;
     return{x:W/2+Math.cos(angle)*r, y:H/2+Math.sin(angle)*r};
   },
-  // 2: Grid
   (i,n,W,H)=>{
     const cols=Math.ceil(Math.sqrt(n));
     const rows=Math.ceil(n/cols);
@@ -176,31 +192,27 @@ const shapes = [
     const padX=W*0.08, padY=H*0.08;
     return{x:padX+(col/(cols-1))*(W-padX*2), y:padY+(row/(rows-1))*(H-padY*2)};
   },
-  // 3: Star
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2;
     const spike=i%2===0?Math.min(W,H)*0.4:Math.min(W,H)*0.18;
     return{x:W/2+Math.cos(angle)*spike, y:H/2+Math.sin(angle)*spike};
   },
-  // 4: Wave
   (i,n,W,H)=>{
     const x=(i/n)*W;
     const y=H/2+Math.sin((i/n)*Math.PI*6)*H*0.28;
     return{x,y};
   },
-  // 5: Explosion
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2+Math.random()*0.5;
     const r=Math.min(W,H)*(0.08+Math.random()*0.42);
     return{x:W/2+Math.cos(angle)*r, y:H/2+Math.sin(angle)*r};
   },
-  // 6: DNA helix
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*6;
     const strand=i%2===0?1:-1;
     return{x:(i/n)*W, y:H/2+Math.sin(t)*H*0.25*strand};
   },
-  // 7: Heart ❤️
+  // 7: Heart
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2;
     const scale=Math.min(W,H)*0.045;
@@ -209,7 +221,7 @@ const shapes = [
       y:H/2-scale*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))
     };
   },
-  // 8: Infinity ∞
+  // 8: Infinity
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2;
     const scale=Math.min(W,H)*0.3;
@@ -218,7 +230,6 @@ const shapes = [
       y:H/2+scale*(Math.sin(t)*Math.cos(t)/(1+Math.sin(t)*Math.sin(t)))
     };
   },
-  // 9: Donut ring
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2;
     const r=Math.min(W,H)*(0.25+Math.random()*0.12);
@@ -252,8 +263,13 @@ function updateProgress(){
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H;
-function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
-resize();window.onresize=resize;
+function resize(){
+  W=canvas.width=innerWidth;
+  H=canvas.height=innerHeight;
+  updateSlideBox();
+}
+resize();
+window.onresize=resize;
 
 const N=150;
 const particles=Array.from({length:N},()=>({
@@ -261,7 +277,10 @@ const particles=Array.from({length:N},()=>({
   y:Math.random()*innerHeight,
   vx:(Math.random()-.5)*0.6,
   vy:(Math.random()-.5)*0.6,
-  r:Math.random()*2+0.5
+  r:Math.random()*2+0.5,
+  // offset from shape target for slide-area drift
+  ox:(Math.random()-.5)*120,
+  oy:(Math.random()-.5)*80
 }));
 
 function triggerShapeTransition(){
@@ -271,6 +290,7 @@ function triggerShapeTransition(){
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
+  attractToSlide=false;
 }
 
 function triggerSpecificShape(shapeIdx){
@@ -279,6 +299,7 @@ function triggerSpecificShape(shapeIdx){
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
+  attractToSlide=false;
 }
 
 // Firebase listeners
@@ -339,11 +360,10 @@ function next(){
   el.classList.remove('show');
   sub.classList.remove('show');
 
-  // Shape logic
   if(idx===0){
-    triggerSpecificShape(8); // ∞
+    triggerSpecificShape(8);
   } else if(current.title.includes('Thank you')){
-    triggerSpecificShape(7); // ❤️
+    triggerSpecificShape(7);
   } else {
     triggerShapeTransition();
   }
@@ -362,8 +382,12 @@ function next(){
       if(current.subtitle)sub.classList.add('show');
     }
     updateProgress();
+    updateSlideBox();
 
-    // Audio logic
+    // After shape settles, attract particles to slide area
+    setTimeout(()=>{ attractToSlide = true; }, 1500);
+
+    // Audio
     if(current.title.includes('Thank you')){
       fadeAudio(bgAudio, 0, 2000);
       endAudio.currentTime=0;
@@ -399,13 +423,24 @@ function showReaction(emoji){
   setTimeout(()=>el.remove(),3500);
 }
 
+// === Q&A CARD WITH AUTO-DISMISS (20 seconds) ===
 function showQuestion(text,name){
   const container=document.getElementById('questions');
   const card=document.createElement('div');
   card.className='question-card';
   card.innerHTML=`<div class="q-label">Question from ${name}</div>${text}`;
   container.appendChild(card);
-  while(container.children.length>5)container.firstChild.remove();
+
+  // Keep max 5 cards
+  while(container.children.length>5) container.firstChild.remove();
+
+  // Auto-dismiss after 20 seconds
+  setTimeout(()=>{
+    card.classList.add('fading');
+    setTimeout(()=>{
+      if(card.parentNode) card.remove();
+    }, 1000); // wait for fade transition
+  }, 20000);
 }
 
 function reboot(){
@@ -423,7 +458,7 @@ function reboot(){
   document.getElementById('subtitle').classList.remove('show');
   document.getElementById('slide').classList.remove('no-border');
   updateProgress();
-  // Reset audio
+  attractToSlide=false;
   fadeAudio(endAudio, 0, 500);
   fadeAudio(bgAudio, 0, 500);
   bgStarted=false;
@@ -458,7 +493,32 @@ function draw(){
         p.vy=(Math.random()-.5)*0.3;
       });
     }
+  } else if(attractToSlide){
+    // After shape: particles drift slowly around the slide box area
+    particles.forEach((p,i)=>{
+      // Target = slide center + per-particle random offset
+      const tx = slideCX + p.ox;
+      const ty = slideCY + p.oy;
+
+      // Gentle pull toward target
+      p.vx += (tx - p.x) * 0.003;
+      p.vy += (ty - p.y) * 0.003;
+
+      // Tiny random wobble so they don't freeze
+      p.vx += (Math.random()-.5)*0.08;
+      p.vy += (Math.random()-.5)*0.08;
+
+      // Phone tilt influence
+      p.vx += forceX * 0.02;
+      p.vy += forceY * 0.02;
+
+      p.vx *= 0.94;
+      p.vy *= 0.94;
+      p.x += p.vx;
+      p.y += p.vy;
+    });
   } else {
+    // Default float
     particles.forEach(p=>{
       p.vx+=forceX*0.03;
       p.vy+=forceY*0.03;
@@ -473,6 +533,7 @@ function draw(){
     });
   }
 
+  // Draw particles
   particles.forEach(p=>{
     ctx.beginPath();
     ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
@@ -480,6 +541,7 @@ function draw(){
     ctx.fill();
   });
 
+  // Draw connections
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
       const dx=particles[i].x-particles[j].x;
