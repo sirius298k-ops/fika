@@ -94,128 +94,101 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/fireba
 import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
-// === AUDIO SETUP ===
+// === AUDIO ===
 const bgAudio = new Audio('bg.mp3');
 bgAudio.loop = true;
 bgAudio.volume = 0;
-
 const endAudio = new Audio('byef1.mp3');
 endAudio.volume = 0;
 
 function fadeAudio(audio, targetVol, duration){
-  const steps = 30;
-  const interval = duration / steps;
-  const delta = (targetVol - audio.volume) / steps;
-  const timer = setInterval(()=>{
-    audio.volume = Math.min(1, Math.max(0, audio.volume + delta));
-    if((delta>0 && audio.volume>=targetVol)||(delta<0 && audio.volume<=targetVol)){
-      audio.volume = targetVol;
+  const steps=30, interval=duration/steps;
+  const delta=(targetVol-audio.volume)/steps;
+  const timer=setInterval(()=>{
+    audio.volume=Math.min(1,Math.max(0,audio.volume+delta));
+    if((delta>0&&audio.volume>=targetVol)||(delta<0&&audio.volume<=targetVol)){
+      audio.volume=targetVol;
       clearInterval(timer);
-      if(targetVol===0) audio.pause();
+      if(targetVol===0)audio.pause();
     }
-  }, interval);
+  },interval);
 }
 
-let bgStarted = false;
-document.addEventListener('keydown', ()=>{
+let bgStarted=false;
+document.addEventListener('keydown',()=>{
   if(!bgStarted){
-    bgStarted = true;
-    bgAudio.play().then(()=>{
-      fadeAudio(bgAudio, 0.15, 2000);
-    }).catch(e=>console.log('bg audio blocked:', e));
+    bgStarted=true;
+    bgAudio.play().then(()=>fadeAudio(bgAudio,0.15,2000))
+      .catch(e=>console.log('bg blocked:',e));
   }
 });
 
 // === FIREBASE ===
-const firebaseConfig = {
-  apiKey: "AIzaSyAGUS5pDI2Brd5EdZYZYk_N_Ex4G2Enc9Y",
-  authDomain: "test1-fika.firebaseapp.com",
-  databaseURL: "https://test1-fika-default-rtdb.firebaseio.com",
-  projectId: "test1-fika",
-  storageBucket: "test1-fika.firebasestorage.app",
-  messagingSenderId: "195634513366",
-  appId: "1:195634513366:web:08b8afefc1406f7cb1d077",
-  measurementId: "G-0LLML02VVQ"
+const firebaseConfig={
+  apiKey:"AIzaSyAGUS5pDI2Brd5EdZYZYk_N_Ex4G2Enc9Y",
+  authDomain:"test1-fika.firebaseapp.com",
+  databaseURL:"https://test1-fika-default-rtdb.firebaseio.com",
+  projectId:"test1-fika",
+  storageBucket:"test1-fika.firebasestorage.app",
+  messagingSenderId:"195634513366",
+  appId:"1:195634513366:web:08b8afefc1406f7cb1d077",
+  measurementId:"G-0LLML02VVQ"
 };
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const pageLoadTime = Date.now();
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const pageLoadTime=Date.now();
 
 // === AGENDA ===
-const agenda = [
-  { title:"", subtitle:"", blank:true },
-  { title:"Welcome to Today's Fika ☕", subtitle:"", blank:false },
-  { title:"Meet Our Guests!", subtitle:"Quick introductions, roles, and a fun fact.", blank:false },
-  { title:"Scaling Digital Transformation", subtitle:"What drives success — and what separates scalable transformations from the rest?", blank:false },
-  { title:"The Future of Autonomous Manufacturing", subtitle:"How will autonomy evolve, and what stands between digital initiatives and lasting value?", blank:false },
-  { title:"AI, Life", subtitle:"How is AI already changing the way we work?", blank:false },
-  { title:"The Human Edge in 2030", subtitle:"As AI takes on routine work, which human skill will matter most?", blank:false },
-  { title:"AI Agents: Action vs. Control", subtitle:"Where should AI act autonomously, and where must humans stay in control?", blank:false },
-  { title:"❓ Open Q&A", subtitle:"Ask anything from your phone!", blank:false },
-  { title:"🎯 Key Takeaways", subtitle:"One word to remember", blank:false },
-  { title:"Thank you! 🎉", subtitle:"", blank:false }
+const agenda=[
+  {title:"",subtitle:"",blank:true},
+  {title:"Welcome to Today's Fika ☕",subtitle:"",blank:false},
+  {title:"Meet Our Guests!",subtitle:"Quick introductions, roles, and a fun fact.",blank:false},
+  {title:"Scaling Digital Transformation",subtitle:"What drives success — and what separates scalable transformations from the rest?",blank:false},
+  {title:"The Future of Autonomous Manufacturing",subtitle:"How will autonomy evolve, and what stands between digital initiatives and lasting value?",blank:false},
+  {title:"AI, Life",subtitle:"How is AI already changing the way we work?",blank:false},
+  {title:"The Human Edge in 2030",subtitle:"As AI takes on routine work, which human skill will matter most?",blank:false},
+  {title:"AI Agents: Action vs. Control",subtitle:"Where should AI act autonomously, and where must humans stay in control?",blank:false},
+  {title:"❓ Open Q&A",subtitle:"Ask anything from your phone!",blank:false},
+  {title:"🎯 Key Takeaways",subtitle:"One word to remember",blank:false},
+  {title:"Thank you! 🎉",subtitle:"",blank:false}
 ];
 
 let idx=-1;
-let forceX=0, forceY=0;
-
-// === SLIDE BOX POSITION (for particle attraction) ===
-// We track the slide box center so particles can hover near it
-let slideCX = window.innerWidth/2;
-let slideCY = window.innerHeight/2;
-let slideW = 0;
-let slideH = 0;
-let attractToSlide = false; // activated after shape transition
-
-function updateSlideBox(){
-  const el = document.getElementById('slide');
-  const rect = el.getBoundingClientRect();
-  slideCX = rect.left + rect.width/2;
-  slideCY = rect.top + rect.height/2;
-  slideW = rect.width;
-  slideH = rect.height;
-}
+let forceX=0,forceY=0;
+let attractToSlide=false;
 
 // === SHAPES ===
-const shapes = [
-  (i,n,W,H)=>({x:Math.random()*W, y:Math.random()*H}),
+const shapes=[
+  (i,n,W,H)=>({x:Math.random()*W,y:Math.random()*H}),
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*8;
     const r=(i/n)*Math.min(W,H)*0.42;
-    return{x:W/2+Math.cos(angle)*r, y:H/2+Math.sin(angle)*r};
+    return{x:W/2+Math.cos(angle)*r,y:H/2+Math.sin(angle)*r};
   },
   (i,n,W,H)=>{
-    const cols=Math.ceil(Math.sqrt(n));
-    const rows=Math.ceil(n/cols);
-    const col=i%cols, row=Math.floor(i/cols);
-    const padX=W*0.08, padY=H*0.08;
-    return{x:padX+(col/(cols-1))*(W-padX*2), y:padY+(row/(rows-1))*(H-padY*2)};
+    const cols=Math.ceil(Math.sqrt(n)),rows=Math.ceil(n/cols);
+    const col=i%cols,row=Math.floor(i/cols);
+    const padX=W*0.08,padY=H*0.08;
+    return{x:padX+(col/(cols-1))*(W-padX*2),y:padY+(row/(rows-1))*(H-padY*2)};
   },
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2;
     const spike=i%2===0?Math.min(W,H)*0.4:Math.min(W,H)*0.18;
-    return{x:W/2+Math.cos(angle)*spike, y:H/2+Math.sin(angle)*spike};
+    return{x:W/2+Math.cos(angle)*spike,y:H/2+Math.sin(angle)*spike};
   },
-  (i,n,W,H)=>{
-    const x=(i/n)*W;
-    const y=H/2+Math.sin((i/n)*Math.PI*6)*H*0.28;
-    return{x,y};
-  },
+  (i,n,W,H)=>({x:(i/n)*W,y:H/2+Math.sin((i/n)*Math.PI*6)*H*0.28}),
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2+Math.random()*0.5;
     const r=Math.min(W,H)*(0.08+Math.random()*0.42);
-    return{x:W/2+Math.cos(angle)*r, y:H/2+Math.sin(angle)*r};
+    return{x:W/2+Math.cos(angle)*r,y:H/2+Math.sin(angle)*r};
   },
   (i,n,W,H)=>{
-    const t=(i/n)*Math.PI*6;
-    const strand=i%2===0?1:-1;
-    return{x:(i/n)*W, y:H/2+Math.sin(t)*H*0.25*strand};
+    const t=(i/n)*Math.PI*6,strand=i%2===0?1:-1;
+    return{x:(i/n)*W,y:H/2+Math.sin(t)*H*0.25*strand};
   },
   // 7: Heart
   (i,n,W,H)=>{
-    const t=(i/n)*Math.PI*2;
-    const scale=Math.min(W,H)*0.045;
+    const t=(i/n)*Math.PI*2,scale=Math.min(W,H)*0.045;
     return{
       x:W/2+scale*(16*Math.pow(Math.sin(t),3)),
       y:H/2-scale*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))
@@ -223,8 +196,7 @@ const shapes = [
   },
   // 8: Infinity
   (i,n,W,H)=>{
-    const t=(i/n)*Math.PI*2;
-    const scale=Math.min(W,H)*0.3;
+    const t=(i/n)*Math.PI*2,scale=Math.min(W,H)*0.3;
     return{
       x:W/2+scale*(Math.cos(t)/(1+Math.sin(t)*Math.sin(t))),
       y:H/2+scale*(Math.sin(t)*Math.cos(t)/(1+Math.sin(t)*Math.sin(t)))
@@ -233,7 +205,7 @@ const shapes = [
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2;
     const r=Math.min(W,H)*(0.25+Math.random()*0.12);
-    return{x:W/2+Math.cos(angle)*r, y:H/2+Math.sin(angle)*r};
+    return{x:W/2+Math.cos(angle)*r,y:H/2+Math.sin(angle)*r};
   }
 ];
 
@@ -241,8 +213,8 @@ let transitioning=false;
 let transitionProgress=0;
 let transitionFrom=[];
 let transitionTo=[];
+let shapeTargets=[];  // ← locked shape positions
 let flashAlpha=0;
-let shapeTargets=[]; // stores final shape positions for each particle
 
 // Progress dots
 const progressEl=document.getElementById('progress');
@@ -264,11 +236,7 @@ function updateProgress(){
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H;
-function resize(){
-  W=canvas.width=innerWidth;
-  H=canvas.height=innerHeight;
-  updateSlideBox();
-}
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
 resize();
 window.onresize=resize;
 
@@ -279,16 +247,15 @@ const particles=Array.from({length:N},()=>({
   vx:(Math.random()-.5)*0.6,
   vy:(Math.random()-.5)*0.6,
   r:Math.random()*2+0.5,
-  ox:(Math.random()-.5)*18, // small drift around shape position
+  ox:(Math.random()-.5)*18,  // tiny per-particle offset
   oy:(Math.random()-.5)*18
 }));
-
 
 function triggerShapeTransition(){
   const shapeIdx=1+Math.floor(Math.random()*(shapes.length-1));
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
-  shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y})); // save targets
+  shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y}));
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
@@ -298,7 +265,7 @@ function triggerShapeTransition(){
 function triggerSpecificShape(shapeIdx){
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
-  shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y})); // save targets
+  shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y}));
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
@@ -385,20 +352,16 @@ function next(){
       if(current.subtitle)sub.classList.add('show');
     }
     updateProgress();
-    updateSlideBox();
+    // Activate shape-lock mode after transition settles
+    setTimeout(()=>{ attractToSlide=true; },1500);
 
-    // After shape settles, attract particles to slide area
-    setTimeout(()=>{ attractToSlide = true; }, 1500);
-
-    // Audio
     if(current.title.includes('Thank you')){
-      fadeAudio(bgAudio, 0, 2000);
+      fadeAudio(bgAudio,0,2000);
       endAudio.currentTime=0;
-      endAudio.play().then(()=>{
-        fadeAudio(endAudio, 0.5, 2000);
-      }).catch(e=>console.log('end audio blocked:',e));
+      endAudio.play().then(()=>fadeAudio(endAudio,0.5,2000))
+        .catch(e=>console.log('end audio blocked:',e));
     }
-  }, 400);
+  },400);
 }
 
 // === HELPERS ===
@@ -426,24 +389,17 @@ function showReaction(emoji){
   setTimeout(()=>el.remove(),3500);
 }
 
-// === Q&A CARD WITH AUTO-DISMISS (20 seconds) ===
 function showQuestion(text,name){
   const container=document.getElementById('questions');
   const card=document.createElement('div');
   card.className='question-card';
   card.innerHTML=`<div class="q-label">Question from ${name}</div>${text}`;
   container.appendChild(card);
-
-  // Keep max 5 cards
-  while(container.children.length>5) container.firstChild.remove();
-
-  // Auto-dismiss after 20 seconds
+  while(container.children.length>5)container.firstChild.remove();
   setTimeout(()=>{
     card.classList.add('fading');
-    setTimeout(()=>{
-      if(card.parentNode) card.remove();
-    }, 1000); // wait for fade transition
-  }, 20000);
+    setTimeout(()=>{if(card.parentNode)card.remove();},1000);
+  },20000);
 }
 
 function reboot(){
@@ -462,8 +418,8 @@ function reboot(){
   document.getElementById('slide').classList.remove('no-border');
   updateProgress();
   attractToSlide=false;
-  fadeAudio(endAudio, 0, 500);
-  fadeAudio(bgAudio, 0, 500);
+  fadeAudio(endAudio,0,500);
+  fadeAudio(bgAudio,0,500);
   bgStarted=false;
 }
 
@@ -481,6 +437,7 @@ function draw(){
   }
 
   if(transitioning){
+    // === PHASE 1: shape forming ===
     transitionProgress=Math.min(1,transitionProgress+0.01);
     const t=easeInOut(transitionProgress);
     particles.forEach((p,i)=>{
@@ -491,37 +448,41 @@ function draw(){
     });
     if(transitionProgress>=1){
       transitioning=false;
-      particles.forEach(p=>{
-        p.vx=(Math.random()-.5)*0.3;
-        p.vy=(Math.random()-.5)*0.3;
+      // Snap particles exactly to shape targets
+      particles.forEach((p,i)=>{
+        p.x=shapeTargets[i].x;
+        p.y=shapeTargets[i].y;
+        p.vx=0;
+        p.vy=0;
       });
     }
+
   } else if(attractToSlide){
-    // Each particle stays near its OWN shape target position
-    // shapeTargets stores where each particle landed after transition
+    // === PHASE 2: shape locked, gentle drift around own position ===
     particles.forEach((p,i)=>{
-      const tx = shapeTargets[i].x + p.ox;
-      const ty = shapeTargets[i].y + p.oy;
+      const tx=shapeTargets[i].x+p.ox;
+      const ty=shapeTargets[i].y+p.oy;
 
-      // Strong pull back to shape position
-      p.vx += (tx - p.x) * 0.06;
-      p.vy += (ty - p.y) * 0.06;
+      // Pull back to shape position
+      p.vx+=(tx-p.x)*0.06;
+      p.vy+=(ty-p.y)*0.06;
 
-      // Very tiny wobble — just enough to feel alive
-      p.vx += (Math.random()-.5) * 0.05;
-      p.vy += (Math.random()-.5) * 0.05;
+      // Tiny wobble — feels alive
+      p.vx+=(Math.random()-.5)*0.05;
+      p.vy+=(Math.random()-.5)*0.05;
 
       // Phone tilt
-      p.vx += forceX * 0.015;
-      p.vy += forceY * 0.015;
+      p.vx+=forceX*0.015;
+      p.vy+=forceY*0.015;
 
-      p.vx *= 0.88;
-      p.vy *= 0.88;
-      p.x += p.vx;
-      p.y += p.vy;
+      p.vx*=0.88;
+      p.vy*=0.88;
+      p.x+=p.vx;
+      p.y+=p.vy;
     });
-  }
-    // Default float
+
+  } else {
+    // === PHASE 0: default float (before first page) ===
     particles.forEach(p=>{
       p.vx+=forceX*0.03;
       p.vy+=forceY*0.03;
