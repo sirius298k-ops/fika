@@ -65,6 +65,18 @@
        transition:background .3s,transform .3s}
   .dot.active{background:#0ff;transform:scale(1.4);box-shadow:0 0 10px #0ff}
   .dot.done{background:rgba(0,255,255,0.5)}
+
+ #qr-overlay{position:fixed;top:0;left:0;width:100%;height:100%;
+              display:flex;align-items:center;justify-content:center;
+              z-index:3;pointer-events:none;
+              transition:opacity .8s}
+  #qr-overlay.hidden{opacity:0}
+  #qr-box{display:flex;flex-direction:column;align-items:center;gap:12px}
+  #qr-img{width:180px;height:180px;border-radius:12px;
+          border:2px solid rgba(0,255,255,0.3);
+          box-shadow:0 0 30px rgba(0,255,255,0.15)}
+  #qr-label{color:rgba(0,255,255,0.5);font:13px monospace;
+            letter-spacing:2px;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -88,8 +100,14 @@
 
 <div id="instruction">→ next | ← back | Space shape | R reboot | 1 wordcloud | 2 Q&A | 3 free | 0 energy</div>
 <canvas id="c"></canvas>
-
+<div id="qr-overlay">
+  <div id="qr-box">
+    <img src="qr.png" id="qr-img">
+    <div id="qr-label">Scan to join</div>
+  </div>
+</div>
 <script type="module">
+ 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
@@ -339,12 +357,16 @@ function next(){
     triggerShapeTransition();
   }
 
-  if(current.blank){
+if(current.blank){
     slideEl.classList.add('no-border');
+    // Show QR on first blank page
+    document.getElementById('qr-overlay').classList.remove('hidden');
   } else {
     slideEl.classList.remove('no-border');
+    // Hide QR on all other pages
+    document.getElementById('qr-overlay').classList.add('hidden');
   }
-
+ 
   setTimeout(()=>{
     el.textContent=current.title;
     sub.textContent=current.subtitle;
