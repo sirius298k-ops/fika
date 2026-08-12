@@ -118,7 +118,7 @@ let bgStarted=false;
 document.addEventListener('keydown',()=>{
   if(!bgStarted){
     bgStarted=true;
-    bgAudio.play().then(()=>fadeAudio(bgAudio,0.15,2000))
+    bgAudio.play().then(()=>fadeAudio(bgAudio,0.5,2000))
       .catch(e=>console.log('bg blocked:',e));
   }
 });
@@ -215,7 +215,8 @@ let transitionFrom=[];
 let transitionTo=[];
 let shapeTargets=[];  // ← locked shape positions
 let flashAlpha=0;
-
+let shapeOffsetX = 0; // gyro offset for entire shape
+let shapeOffsetY = 0;
 // Progress dots
 const progressEl=document.getElementById('progress');
 agenda.forEach(()=>{
@@ -421,6 +422,8 @@ function reboot(){
   fadeAudio(endAudio,0,500);
   fadeAudio(bgAudio,0,500);
   bgStarted=false;
+  shapeOffsetX = 0;
+  shapeOffsetY = 0;
 }
 
 function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
@@ -457,28 +460,26 @@ function draw(){
       });
     }
 
-  } else if(attractToSlide){
-    // === PHASE 2: shape locked, gentle drift around own position ===
+ } else if(attractToSlide){
+    // Gyroscope shifts the entire shape as a whole
+    shapeOffsetX += (forceX * 40 - shapeOffsetX) * 0.05;
+    shapeOffsetY += (forceY * 40 - shapeOffsetY) * 0.05;
+
     particles.forEach((p,i)=>{
-      const tx=shapeTargets[i].x+p.ox;
-      const ty=shapeTargets[i].y+p.oy;
+      // Target = shape position + gyro offset + tiny per-particle wobble
+      const tx = shapeTargets[i].x + p.ox + shapeOffsetX;
+      const ty = shapeTargets[i].y + p.oy + shapeOffsetY;
 
-      // Pull back to shape position
-      p.vx+=(tx-p.x)*0.06;
-      p.vy+=(ty-p.y)*0.06;
+      p.vx += (tx - p.x) * 0.06;
+      p.vy += (ty - p.y) * 0.06;
 
-      // Tiny wobble — feels alive
-      p.vx+=(Math.random()-.5)*0.05;
-      p.vy+=(Math.random()-.5)*0.05;
+      p.vx += (Math.random()-.5) * 0.05;
+      p.vy += (Math.random()-.5) * 0.05;
 
-      // Phone tilt
-      p.vx+=forceX*0.015;
-      p.vy+=forceY*0.015;
-
-      p.vx*=0.88;
-      p.vy*=0.88;
-      p.x+=p.vx;
-      p.y+=p.vy;
+      p.vx *= 0.88;
+      p.vy *= 0.88;
+      p.x += p.vx;
+      p.y += p.vy;
     });
 
   } else {
