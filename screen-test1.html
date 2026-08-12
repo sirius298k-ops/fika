@@ -73,19 +73,6 @@
        background:rgba(0,255,255,0.2);transition:background .3s,transform .3s}
   .dot.active{background:#0ff;transform:scale(1.4);box-shadow:0 0 10px #0ff}
   .dot.done{background:rgba(0,255,255,0.5)}
-
-  /* QR Code overlay — only visible on blank first page */
-  #qr-overlay{position:fixed;top:0;left:0;width:100%;height:100%;
-              display:flex;align-items:center;justify-content:center;
-              z-index:3;pointer-events:none;
-              opacity:1;transition:opacity .8s}
-  #qr-overlay.hidden{opacity:0}
-  #qr-box{display:flex;flex-direction:column;align-items:center;gap:14px}
-  #qr-img{width:200px;height:200px;border-radius:14px;
-          border:2px solid rgba(0,255,255,0.35);
-          box-shadow:0 0 40px rgba(0,255,255,0.15)}
-  #qr-label{color:rgba(0,255,255,0.45);font:13px monospace;
-            letter-spacing:3px;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -93,18 +80,10 @@
 <div id="info">Players: <span id="count">0</span></div>
 <div id="mode-indicator"></div>
 
-<div id="slide">
+<div id="slide" class="no-border">
   <div id="slide-number"></div>
   <div id="topic"></div>
   <div id="subtitle"></div>
-</div>
-
-<!-- QR Code — shown on first page only -->
-<div id="qr-overlay">
-  <div id="qr-box">
-    <img src="qr.png" id="qr-img">
-    <div id="qr-label">Scan to join</div>
-  </div>
 </div>
 
 <div id="progress"></div>
@@ -199,7 +178,8 @@ const shapes=[
     const cols=Math.ceil(Math.sqrt(n)),rows=Math.ceil(n/cols);
     const col=i%cols,row=Math.floor(i/cols);
     const padX=W*0.08,padY=H*0.08;
-    return{x:padX+(col/(cols-1))*(W-padX*2),y:padY+(row/(rows-1))*(H-padY*2)};
+    return{x:padX+(col/(cols-1))*(W-padX*2),
+           y:padY+(row/(rows-1))*(H-padY*2)};
   },
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2;
@@ -216,6 +196,7 @@ const shapes=[
     const t=(i/n)*Math.PI*6,strand=i%2===0?1:-1;
     return{x:(i/n)*W,y:H/2+Math.sin(t)*H*0.25*strand};
   },
+  // 7: Heart
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2,scale=Math.min(W,H)*0.045;
     return{
@@ -223,6 +204,7 @@ const shapes=[
       y:H/2-scale*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))
     };
   },
+  // 8: Infinity
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2,scale=Math.min(W,H)*0.3;
     return{
@@ -264,15 +246,15 @@ function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
 resize();
 window.onresize=resize;
 
-const N=150;
+const N=120;
 const particles=Array.from({length:N},()=>({
   x:Math.random()*innerWidth,
   y:Math.random()*innerHeight,
-  vx:(Math.random()-.5)*0.6,
-  vy:(Math.random()-.5)*0.6,
+  vx:(Math.random()-.5)*0.3,  // slower initial speed
+  vy:(Math.random()-.5)*0.3,
   r:Math.random()*2+0.5,
-  ox:(Math.random()-.5)*18,
-  oy:(Math.random()-.5)*18
+  ox:(Math.random()-.5)*14,
+  oy:(Math.random()-.5)*14
 }));
 
 function triggerShapeTransition(){
@@ -280,14 +262,16 @@ function triggerShapeTransition(){
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
   shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y}));
-  flashAlpha=1.0;transitioning=true;transitionProgress=0;attractToSlide=false;
+  flashAlpha=1.0;transitioning=true;transitionProgress=0;
+  attractToSlide=false;
 }
 
 function triggerSpecificShape(shapeIdx){
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
   shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y}));
-  flashAlpha=1.0;transitioning=true;transitionProgress=0;attractToSlide=false;
+  flashAlpha=1.0;transitioning=true;transitionProgress=0;
+  attractToSlide=false;
 }
 
 // Firebase listeners
@@ -344,7 +328,6 @@ function next(){
   const slideEl=document.getElementById('slide');
   const el=document.getElementById('topic');
   const sub=document.getElementById('subtitle');
-  const qr=document.getElementById('qr-overlay');
 
   el.classList.remove('show');
   sub.classList.remove('show');
@@ -358,13 +341,9 @@ function next(){
   }
 
   if(current.blank){
-    // First page: no slide box, show QR
     slideEl.classList.add('no-border');
-    qr.classList.remove('hidden');
   } else {
-    // All other pages: show slide box, hide QR
     slideEl.classList.remove('no-border');
-    qr.classList.add('hidden');
   }
 
   setTimeout(()=>{
@@ -436,8 +415,7 @@ function reboot(){
   idx=-1;
   document.getElementById('topic').classList.remove('show');
   document.getElementById('subtitle').classList.remove('show');
-  document.getElementById('slide').classList.remove('no-border');
-  document.getElementById('qr-overlay').classList.remove('hidden');
+  document.getElementById('slide').classList.add('no-border');
   updateProgress();
   attractToSlide=false;
   shapeOffsetX=0;shapeOffsetY=0;
@@ -450,23 +428,25 @@ function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 
 // === DRAW ===
 function draw(){
-  ctx.fillStyle='rgba(10,10,26,0.15)';
+  ctx.fillStyle='rgba(10,10,26,0.18)';
   ctx.fillRect(0,0,W,H);
 
   if(flashAlpha>0){
-    ctx.fillStyle=`rgba(0,255,255,${flashAlpha*0.12})`;
+    ctx.fillStyle=`rgba(0,255,255,${flashAlpha*0.1})`;
     ctx.fillRect(0,0,W,H);
-    flashAlpha=Math.max(0,flashAlpha-0.035);
+    flashAlpha=Math.max(0,flashAlpha-0.025); // slower flash fade
   }
 
   if(transitioning){
-    transitionProgress=Math.min(1,transitionProgress+0.01);
+    // slower transition speed: 0.007 instead of 0.01
+    transitionProgress=Math.min(1,transitionProgress+0.007);
     const t=easeInOut(transitionProgress);
     particles.forEach((p,i)=>{
       p.x=transitionFrom[i].x+(transitionTo[i].x-transitionFrom[i].x)*t;
       p.y=transitionFrom[i].y+(transitionTo[i].y-transitionFrom[i].y)*t;
-      p.x+=Math.sin(Date.now()*0.002+i*0.5)*1.5*(1-t);
-      p.y+=Math.cos(Date.now()*0.002+i*0.5)*1.5*(1-t);
+      // reduced wobble during transition
+      p.x+=Math.sin(Date.now()*0.001+i*0.5)*0.8*(1-t);
+      p.y+=Math.cos(Date.now()*0.001+i*0.5)*0.8*(1-t);
     });
     if(transitionProgress>=1){
       transitioning=false;
@@ -478,31 +458,45 @@ function draw(){
     }
 
   } else if(attractToSlide){
-    shapeOffsetX+=(forceX*40-shapeOffsetX)*0.05;
-    shapeOffsetY+=(forceY*40-shapeOffsetY)*0.05;
+    // Gyroscope shifts entire shape smoothly
+    shapeOffsetX+=(forceX*30-shapeOffsetX)*0.03; // gentler gyro response
+    shapeOffsetY+=(forceY*30-shapeOffsetY)*0.03;
+
     particles.forEach((p,i)=>{
       const tx=shapeTargets[i].x+p.ox+shapeOffsetX;
       const ty=shapeTargets[i].y+p.oy+shapeOffsetY;
-      p.vx+=(tx-p.x)*0.06;
-      p.vy+=(ty-p.y)*0.06;
-      p.vx+=(Math.random()-.5)*0.05;
-      p.vy+=(Math.random()-.5)*0.05;
-      p.vx*=0.88;p.vy*=0.88;
-      p.x+=p.vx;p.y+=p.vy;
+
+      // softer pull
+      p.vx+=(tx-p.x)*0.04;
+      p.vy+=(ty-p.y)*0.04;
+
+      // very tiny wobble
+      p.vx+=(Math.random()-.5)*0.025;
+      p.vy+=(Math.random()-.5)*0.025;
+
+      p.vx*=0.92; // higher damping = slower movement
+      p.vy*=0.92;
+      p.x+=p.vx;
+      p.y+=p.vy;
     });
 
   } else {
+    // Default float — slow and calm
     particles.forEach(p=>{
-      p.vx+=forceX*0.03;p.vy+=forceY*0.03;
-      p.vx+=(Math.random()-.5)*0.04;
-      p.vy+=(Math.random()-.5)*0.04;
-      p.vx*=.97;p.vy*=.97;
-      p.x+=p.vx;p.y+=p.vy;
+      p.vx+=forceX*0.015; // gentler gyro in float mode
+      p.vy+=forceY*0.015;
+      p.vx+=(Math.random()-.5)*0.02; // less random noise
+      p.vy+=(Math.random()-.5)*0.02;
+      p.vx*=.98;  // higher damping
+      p.vy*=.98;
+      p.x+=p.vx;
+      p.y+=p.vy;
       if(p.x<0||p.x>W)p.vx*=-1;
       if(p.y<0||p.y>H)p.vy*=-1;
     });
   }
 
+  // Draw particles
   particles.forEach(p=>{
     ctx.beginPath();
     ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
@@ -510,6 +504,7 @@ function draw(){
     ctx.fill();
   });
 
+  // Draw connections
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
       const dx=particles[i].x-particles[j].x;
