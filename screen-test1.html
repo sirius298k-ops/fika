@@ -18,13 +18,13 @@
          transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px);
          line-height:1.6}
   #topic.show{opacity:1;transform:translateY(0)}
-  #subtitle{color:rgba(0,255,255,0.6);font-size:1.8rem;margin-top:20px;
+  #subtitle{color:rgba(0,255,255,0.6);font-size:1.6rem;margin-top:20px;
             line-height:1.8;transition:opacity .6s;opacity:0}
   #subtitle.show{opacity:1}
 
   #info{position:fixed;top:20px;left:30px;color:#0ff;font:13px monospace;z-index:10;opacity:0.6}
   #mode-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);
-                  color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
+                color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
 
   #energy-wrap{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);
                text-align:center;z-index:5}
@@ -48,11 +48,11 @@
   #questions{position:fixed;top:80px;right:30px;width:300px;z-index:8;
              display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:hidden}
   .question-card{background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
-                 border-radius:12px;padding:14px 18px;color:#fff;font-size:0.9rem;
-                 backdrop-filter:blur(5px);animation:slideIn .5s ease-out}
+                border-radius:12px;padding:14px 18px;color:#fff;font-size:0.9rem;
+                backdrop-filter:blur(5px);animation:slideIn .5s ease-out}
   @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
   .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;
-                           text-transform:uppercase;letter-spacing:1px}
+                text-transform:uppercase;letter-spacing:1px}
 
   #instruction{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
                color:rgba(0,255,255,0.25);font:11px monospace;z-index:5}
@@ -91,6 +91,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
 // === AUDIO SETUP ===
 const bgAudio = new Audio('bg.mp3');
 bgAudio.loop = true;
@@ -99,7 +100,6 @@ bgAudio.volume = 0;
 const endAudio = new Audio('byef1.mp3');
 endAudio.volume = 0;
 
-// Fade function
 function fadeAudio(audio, targetVol, duration){
   const steps = 30;
   const interval = duration / steps;
@@ -114,7 +114,6 @@ function fadeAudio(audio, targetVol, duration){
   }, interval);
 }
 
-// Start bg music on first user interaction
 let bgStarted = false;
 document.addEventListener('keydown', ()=>{
   if(!bgStarted){
@@ -123,8 +122,9 @@ document.addEventListener('keydown', ()=>{
       fadeAudio(bgAudio, 0.15, 2000);
     }).catch(e=>console.log('bg audio blocked:', e));
   }
-}, {once: false});
- 
+});
+
+// === FIREBASE ===
 const firebaseConfig = {
   apiKey: "AIzaSyAGUS5pDI2Brd5EdZYZYk_N_Ex4G2Enc9Y",
   authDomain: "test1-fika.firebaseapp.com",
@@ -141,141 +141,84 @@ const db = getDatabase(app);
 const pageLoadTime = Date.now();
 
 // === AGENDA ===
-// subtitle uses \n for line breaks between bullet points
 const agenda = [
-  {
-    title: "",
-    subtitle: "",
-    blank: true
-  },
-  {
-    title: "Welcome to Today's Fika ☕",
-    subtitle: "",
-    blank: false
-  },
-  {
-    title: "Meet Our Guests!",
-    subtitle: "Quick introductions, roles, and a fun fact.",
-    blank: false
-  },
-  {
-    title: "Scaling Digital Transformation",
-    subtitle: "What drives success—and what separates scalable transformations from the rest?",
-    blank: false
-  },
-  {
-    title: "The Future of Autonomous Manufacturing",
-    subtitle: "How will autonomy evolve, and what stands between digital initiatives and lasting value?",
-    blank: false
-  },
-  {
-    title: "AI，Life",
-    subtitle: "How is AI already changing the way we work?",
-    blank: false
-  },
-  {
-    title: "The Human Edge in 2030",
-    subtitle: "As AI takes on routine work, which human skill will matter most?",
-    blank: false
-  },
-  {
-    title: "AI Agents: Action vs. Control",
-    subtitle: "Where should AI act autonomously, and where must humans stay in control?",
-    blank: false
-  },
-  {
-    title: "❓ Open Q&A",
-    subtitle: "Ask anything from your phone！",
-    blank: false
-  },
-  {
-    title: "🎯 Key Takeaways",
-    subtitle: "One word to remember",
-    blank: false
-  },
-  {
-    title: "Thank you! 🎉",
-    subtitle: "",
-    blank: false
-  }
+  { title:"", subtitle:"", blank:true },
+  { title:"Welcome to Today's Fika ☕", subtitle:"", blank:false },
+  { title:"Meet Our Guests!", subtitle:"Quick introductions, roles, and a fun fact.", blank:false },
+  { title:"Scaling Digital Transformation", subtitle:"What drives success — and what separates scalable transformations from the rest?", blank:false },
+  { title:"The Future of Autonomous Manufacturing", subtitle:"How will autonomy evolve, and what stands between digital initiatives and lasting value?", blank:false },
+  { title:"AI, Life", subtitle:"How is AI already changing the way we work?", blank:false },
+  { title:"The Human Edge in 2030", subtitle:"As AI takes on routine work, which human skill will matter most?", blank:false },
+  { title:"AI Agents: Action vs. Control", subtitle:"Where should AI act autonomously, and where must humans stay in control?", blank:false },
+  { title:"❓ Open Q&A", subtitle:"Ask anything from your phone!", blank:false },
+  { title:"🎯 Key Takeaways", subtitle:"One word to remember", blank:false },
+  { title:"Thank you! 🎉", subtitle:"", blank:false }
 ];
 
-let idx=-1, mode='float';
+let idx=-1;
 let forceX=0, forceY=0;
 
-// === SHAPES (removed single circle and two circles, added 3 new ones) ===
+// === SHAPES ===
 const shapes = [
-  // 0: Scatter (float)
+  // 0: Scatter
   (i,n,W,H)=>({x:Math.random()*W, y:Math.random()*H}),
-
   // 1: Spiral
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*8;
     const r=(i/n)*Math.min(W,H)*0.42;
     return{x:W/2+Math.cos(angle)*r, y:H/2+Math.sin(angle)*r};
   },
-
   // 2: Grid
   (i,n,W,H)=>{
     const cols=Math.ceil(Math.sqrt(n));
     const rows=Math.ceil(n/cols);
     const col=i%cols, row=Math.floor(i/cols);
     const padX=W*0.08, padY=H*0.08;
-    return{
-      x:padX+(col/(cols-1))*(W-padX*2),
-      y:padY+(row/(rows-1))*(H-padY*2)
-    };
+    return{x:padX+(col/(cols-1))*(W-padX*2), y:padY+(row/(rows-1))*(H-padY*2)};
   },
-
   // 3: Star
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2;
     const spike=i%2===0?Math.min(W,H)*0.4:Math.min(W,H)*0.18;
     return{x:W/2+Math.cos(angle)*spike, y:H/2+Math.sin(angle)*spike};
   },
-
   // 4: Wave
   (i,n,W,H)=>{
     const x=(i/n)*W;
     const y=H/2+Math.sin((i/n)*Math.PI*6)*H*0.28;
     return{x,y};
   },
-
-  // 5: Explosion / burst
+  // 5: Explosion
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2+Math.random()*0.5;
     const r=Math.min(W,H)*(0.08+Math.random()*0.42);
     return{x:W/2+Math.cos(angle)*r, y:H/2+Math.sin(angle)*r};
   },
-
-  // 6: DNA double helix
+  // 6: DNA helix
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*6;
     const strand=i%2===0?1:-1;
-    const x=(i/n)*W;
-    const y=H/2+Math.sin(t)*H*0.25*strand;
-    return{x,y};
+    return{x:(i/n)*W, y:H/2+Math.sin(t)*H*0.25*strand};
   },
-
   // 7: Heart ❤️
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2;
     const scale=Math.min(W,H)*0.045;
-    const x=W/2+scale*(16*Math.pow(Math.sin(t),3));
-    const y=H/2-scale*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
-    return{x,y};
+    return{
+      x:W/2+scale*(16*Math.pow(Math.sin(t),3)),
+      y:H/2-scale*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))
+    };
   },
-
   // 8: Infinity ∞
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2;
     const scale=Math.min(W,H)*0.3;
-    const x=W/2+scale*(Math.cos(t)/(1+Math.sin(t)*Math.sin(t)));
-    const y=H/2+scale*(Math.sin(t)*Math.cos(t)/(1+Math.sin(t)*Math.sin(t)));
-    return{x,y};
+    return{
+      x:W/2+scale*(Math.cos(t)/(1+Math.sin(t)*Math.sin(t))),
+      y:H/2+scale*(Math.sin(t)*Math.cos(t)/(1+Math.sin(t)*Math.sin(t)))
+    };
   },
-
-  // 9: Scatter ring (donut)
+  // 9: Donut ring
   (i,n,W,H)=>{
     const angle=(i/n)*Math.PI*2;
     const r=Math.min(W,H)*(0.25+Math.random()*0.12);
@@ -322,22 +265,23 @@ const particles=Array.from({length:N},()=>({
 }));
 
 function triggerShapeTransition(){
-  // Pick random shape excluding scatter (index 0)
   const shapeIdx=1+Math.floor(Math.random()*(shapes.length-1));
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
-};
+}
+
 function triggerSpecificShape(shapeIdx){
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
-};
-// === FIREBASE ===
+}
+
+// Firebase listeners
 onValue(ref(db,'players'),snap=>{
   const data=snap.val()||{};
   const players=Object.values(data);
@@ -383,7 +327,7 @@ onValue(ref(db,'screenMode'),snap=>{
     val==='free'?'💬 FREE':'🔋 ENERGY';
 });
 
-// === NEXT / PREV ===
+// === NEXT ===
 function next(){
   if(idx>=agenda.length-1)return;
   idx++;
@@ -391,29 +335,26 @@ function next(){
   const slideEl=document.getElementById('slide');
   const el=document.getElementById('topic');
   const sub=document.getElementById('subtitle');
-  const num=document.getElementById('slide-number');
 
-el.classList.remove('show');
-sub.classList.remove('show');
+  el.classList.remove('show');
+  sub.classList.remove('show');
 
-// 第一页固定无穷，最后一页固定爱心，其他随机
-if(idx===0){
-  triggerSpecificShape(8); // ∞ infinity
-} else if(agenda[idx].title.includes('Thank you')){
-  triggerSpecificShape(7); // ❤️ heart
-} else {
-  triggerShapeTransition(); // random
-}
+  // Shape logic
+  if(idx===0){
+    triggerSpecificShape(8); // ∞
+  } else if(current.title.includes('Thank you')){
+    triggerSpecificShape(7); // ❤️
+  } else {
+    triggerShapeTransition();
+  }
 
   if(current.blank){
     slideEl.classList.add('no-border');
-    num.textContent='';
   } else {
     slideEl.classList.remove('no-border');
-    num.textContent='';
   }
 
-setTimeout(()=>{
+  setTimeout(()=>{
     el.textContent=current.title;
     sub.textContent=current.subtitle;
     if(!current.blank){
@@ -422,15 +363,18 @@ setTimeout(()=>{
     }
     updateProgress();
 
-    // 播放音乐 — Thank You 页
+    // Audio logic
     if(current.title.includes('Thank you')){
-      const audio = new Audio('byef1.mp3');
-      audio.volume = 0.4;
-      audio.play().catch(e=>console.log('audio blocked:',e));
+      fadeAudio(bgAudio, 0, 2000);
+      endAudio.currentTime=0;
+      endAudio.play().then(()=>{
+        fadeAudio(endAudio, 0.5, 2000);
+      }).catch(e=>console.log('end audio blocked:',e));
     }
-  },400);
+  }, 400);
 }
 
+// === HELPERS ===
 function showWord(text,color,name){
   const el=document.createElement('div');
   el.className='word';
@@ -477,9 +421,12 @@ function reboot(){
   idx=-1;
   document.getElementById('topic').classList.remove('show');
   document.getElementById('subtitle').classList.remove('show');
-  document.getElementById('slide-number').textContent='';
   document.getElementById('slide').classList.remove('no-border');
   updateProgress();
+  // Reset audio
+  fadeAudio(endAudio, 0, 500);
+  fadeAudio(bgAudio, 0, 500);
+  bgStarted=false;
 }
 
 function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
@@ -489,7 +436,6 @@ function draw(){
   ctx.fillStyle='rgba(10,10,26,0.15)';
   ctx.fillRect(0,0,W,H);
 
-  // Flash
   if(flashAlpha>0){
     ctx.fillStyle=`rgba(0,255,255,${flashAlpha*0.12})`;
     ctx.fillRect(0,0,W,H);
@@ -502,35 +448,31 @@ function draw(){
     particles.forEach((p,i)=>{
       p.x=transitionFrom[i].x+(transitionTo[i].x-transitionFrom[i].x)*t;
       p.y=transitionFrom[i].y+(transitionTo[i].y-transitionFrom[i].y)*t;
-      // subtle wobble
       p.x+=Math.sin(Date.now()*0.002+i*0.5)*1.5*(1-t);
       p.y+=Math.cos(Date.now()*0.002+i*0.5)*1.5*(1-t);
     });
-  if(transitionProgress>=1){
-  transitioning=false;
-  // 形状形成后立即给每个粒子一个微小的随机速度，自然飘动
-  particles.forEach(p=>{
-    p.vx=(Math.random()-.5)*0.3;
-    p.vy=(Math.random()-.5)*0.3;
-  });
-}
- } else {
-  particles.forEach(p=>{
-    p.vx+=forceX*0.03;
-    p.vy+=forceY*0.03;
-    // 极小的随机扰动，让粒子在形状上轻微颤动
-    p.vx+=(Math.random()-.5)*0.04;
-    p.vy+=(Math.random()-.5)*0.04;
-    p.vx*=.97;
-    p.vy*=.97;
-    p.x+=p.vx;
-    p.y+=p.vy;
-    if(p.x<0||p.x>W)p.vx*=-1;
-    if(p.y<0||p.y>H)p.vy*=-1;
-  });
-}
+    if(transitionProgress>=1){
+      transitioning=false;
+      particles.forEach(p=>{
+        p.vx=(Math.random()-.5)*0.3;
+        p.vy=(Math.random()-.5)*0.3;
+      });
+    }
+  } else {
+    particles.forEach(p=>{
+      p.vx+=forceX*0.03;
+      p.vy+=forceY*0.03;
+      p.vx+=(Math.random()-.5)*0.04;
+      p.vy+=(Math.random()-.5)*0.04;
+      p.vx*=.97;
+      p.vy*=.97;
+      p.x+=p.vx;
+      p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+    });
+  }
 
-  // Draw particles
   particles.forEach(p=>{
     ctx.beginPath();
     ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
@@ -538,7 +480,6 @@ function draw(){
     ctx.fill();
   });
 
-  // Draw connections
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
       const dx=particles[i].x-particles[j].x;
