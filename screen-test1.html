@@ -10,30 +10,34 @@
          border:1px solid rgba(0,255,255,0.15);border-radius:20px;
          padding:50px 60px;text-align:center;z-index:2;
          backdrop-filter:blur(5px);box-shadow:0 0 60px rgba(0,255,255,0.05)}
-  #slide.no-border{background:transparent;border:none;box-shadow:none;backdrop-filter:none}
-  #slide-number{position:absolute;top:20px;right:30px;color:rgba(0,255,255,0.3);
-                font:12px monospace}
+  #slide.no-border{background:transparent;border:none;
+                   box-shadow:none;backdrop-filter:none}
+  #slide-number{position:absolute;top:20px;right:30px;
+                color:rgba(0,255,255,0.3);font:12px monospace}
   #topic{color:#fff;font-size:1.6rem;font-weight:bold;
          text-shadow:0 0 20px rgba(0,255,255,0.3);
-         transition:opacity .6s,transform .6s;opacity:0;transform:translateY(20px);
-         line-height:1.6}
+         transition:opacity .6s,transform .6s;opacity:0;
+         transform:translateY(20px);line-height:1.6}
   #topic.show{opacity:1;transform:translateY(0)}
   #subtitle{color:rgba(0,255,255,0.6);font-size:0.95rem;margin-top:20px;
             line-height:1.8;transition:opacity .6s;opacity:0}
   #subtitle.show{opacity:1}
 
-  #info{position:fixed;top:20px;left:30px;color:#0ff;font:13px monospace;z-index:10;opacity:0.6}
+  #info{position:fixed;top:20px;left:30px;color:#0ff;
+        font:13px monospace;z-index:10;opacity:0.6}
   #mode-indicator{position:fixed;top:20px;left:50%;transform:translateX(-50%);
-                color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
+                  color:#0ff;font:bold 0.9rem monospace;z-index:10;opacity:0.5}
 
   #energy-wrap{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);
                text-align:center;z-index:5}
   #energy-label{color:rgba(0,255,255,0.4);font:11px monospace;margin-bottom:6px}
   #energy{width:250px;height:6px;background:#111;border-radius:3px}
-  #energy-bar{height:100%;width:0%;background:linear-gradient(90deg,#0ff,#f0f);
+  #energy-bar{height:100%;width:0%;
+              background:linear-gradient(90deg,#0ff,#f0f);
               border-radius:3px;transition:width .2s}
 
-  #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6}
+  #wordcloud{position:fixed;top:0;left:0;width:100%;height:100%;
+             pointer-events:none;z-index:6}
   .word{position:absolute;color:#fff;font-weight:bold;opacity:0;
         transition:opacity 1s;text-shadow:0 0 10px currentColor}
   .word.show{opacity:1}
@@ -47,39 +51,45 @@
 
   #questions{position:fixed;top:80px;right:30px;width:300px;z-index:8;
              display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:hidden}
-  .question-card{background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);
-                border-radius:12px;padding:14px 18px;color:#fff;font-size:0.9rem;
-                backdrop-filter:blur(5px);animation:slideIn .5s ease-out;
-                transition:opacity 1s}
+  .question-card{background:rgba(0,255,255,0.05);
+                 border:1px solid rgba(0,255,255,0.2);
+                 border-radius:12px;padding:14px 18px;color:#fff;
+                 font-size:0.9rem;backdrop-filter:blur(5px);
+                 animation:slideIn .5s ease-out;transition:opacity 1s}
   .question-card.fading{opacity:0}
-  @keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
-  .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;opacity:0.5;
-                text-transform:uppercase;letter-spacing:1px}
+  @keyframes slideIn{
+    from{transform:translateX(100px);opacity:0}
+    to{transform:translateX(0);opacity:1}
+  }
+  .question-card .q-label{color:#0ff;font-size:0.65rem;margin-bottom:6px;
+                           opacity:0.5;text-transform:uppercase;letter-spacing:1px}
 
   #instruction{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);
                color:rgba(0,255,255,0.25);font:11px monospace;z-index:5}
 
   #progress{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
             display:flex;gap:6px;z-index:5}
-  .dot{width:7px;height:7px;border-radius:50%;background:rgba(0,255,255,0.2);
-       transition:background .3s,transform .3s}
+  .dot{width:7px;height:7px;border-radius:50%;
+       background:rgba(0,255,255,0.2);transition:background .3s,transform .3s}
   .dot.active{background:#0ff;transform:scale(1.4);box-shadow:0 0 10px #0ff}
   .dot.done{background:rgba(0,255,255,0.5)}
 
- #qr-overlay{position:fixed;top:0;left:0;width:100%;height:100%;
+  /* QR Code overlay — only visible on blank first page */
+  #qr-overlay{position:fixed;top:0;left:0;width:100%;height:100%;
               display:flex;align-items:center;justify-content:center;
               z-index:3;pointer-events:none;
-              transition:opacity .8s}
+              opacity:1;transition:opacity .8s}
   #qr-overlay.hidden{opacity:0}
-  #qr-box{display:flex;flex-direction:column;align-items:center;gap:12px}
-  #qr-img{width:180px;height:180px;border-radius:12px;
-          border:2px solid rgba(0,255,255,0.3);
-          box-shadow:0 0 30px rgba(0,255,255,0.15)}
-  #qr-label{color:rgba(0,255,255,0.5);font:13px monospace;
-            letter-spacing:2px;text-transform:uppercase}
+  #qr-box{display:flex;flex-direction:column;align-items:center;gap:14px}
+  #qr-img{width:200px;height:200px;border-radius:14px;
+          border:2px solid rgba(0,255,255,0.35);
+          box-shadow:0 0 40px rgba(0,255,255,0.15)}
+  #qr-label{color:rgba(0,255,255,0.45);font:13px monospace;
+            letter-spacing:3px;text-transform:uppercase}
 </style>
 </head>
 <body>
+
 <div id="info">Players: <span id="count">0</span></div>
 <div id="mode-indicator"></div>
 
@@ -87,6 +97,14 @@
   <div id="slide-number"></div>
   <div id="topic"></div>
   <div id="subtitle"></div>
+</div>
+
+<!-- QR Code — shown on first page only -->
+<div id="qr-overlay">
+  <div id="qr-box">
+    <img src="qr.png" id="qr-img">
+    <div id="qr-label">Scan to join</div>
+  </div>
 </div>
 
 <div id="progress"></div>
@@ -100,14 +118,8 @@
 
 <div id="instruction">→ next | ← back | Space shape | R reboot | 1 wordcloud | 2 Q&A | 3 free | 0 energy</div>
 <canvas id="c"></canvas>
-<div id="qr-overlay">
-  <div id="qr-box">
-    <img src="qr.png" id="qr-img">
-    <div id="qr-label">Scan to join</div>
-  </div>
-</div>
+
 <script type="module">
- 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
@@ -174,13 +186,13 @@ const agenda=[
 let idx=-1;
 let forceX=0,forceY=0;
 let attractToSlide=false;
+let shapeOffsetX=0,shapeOffsetY=0;
 
 // === SHAPES ===
 const shapes=[
   (i,n,W,H)=>({x:Math.random()*W,y:Math.random()*H}),
   (i,n,W,H)=>{
-    const angle=(i/n)*Math.PI*8;
-    const r=(i/n)*Math.min(W,H)*0.42;
+    const angle=(i/n)*Math.PI*8,r=(i/n)*Math.min(W,H)*0.42;
     return{x:W/2+Math.cos(angle)*r,y:H/2+Math.sin(angle)*r};
   },
   (i,n,W,H)=>{
@@ -204,7 +216,6 @@ const shapes=[
     const t=(i/n)*Math.PI*6,strand=i%2===0?1:-1;
     return{x:(i/n)*W,y:H/2+Math.sin(t)*H*0.25*strand};
   },
-  // 7: Heart
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2,scale=Math.min(W,H)*0.045;
     return{
@@ -212,7 +223,6 @@ const shapes=[
       y:H/2-scale*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))
     };
   },
-  // 8: Infinity
   (i,n,W,H)=>{
     const t=(i/n)*Math.PI*2,scale=Math.min(W,H)*0.3;
     return{
@@ -227,14 +237,10 @@ const shapes=[
   }
 ];
 
-let transitioning=false;
-let transitionProgress=0;
-let transitionFrom=[];
-let transitionTo=[];
-let shapeTargets=[];  // ← locked shape positions
+let transitioning=false,transitionProgress=0;
+let transitionFrom=[],transitionTo=[],shapeTargets=[];
 let flashAlpha=0;
-let shapeOffsetX = 0; // gyro offset for entire shape
-let shapeOffsetY = 0;
+
 // Progress dots
 const progressEl=document.getElementById('progress');
 agenda.forEach(()=>{
@@ -251,7 +257,6 @@ function updateProgress(){
   });
 }
 
-// Canvas
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H;
@@ -266,7 +271,7 @@ const particles=Array.from({length:N},()=>({
   vx:(Math.random()-.5)*0.6,
   vy:(Math.random()-.5)*0.6,
   r:Math.random()*2+0.5,
-  ox:(Math.random()-.5)*18,  // tiny per-particle offset
+  ox:(Math.random()-.5)*18,
   oy:(Math.random()-.5)*18
 }));
 
@@ -275,20 +280,14 @@ function triggerShapeTransition(){
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
   shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y}));
-  flashAlpha=1.0;
-  transitioning=true;
-  transitionProgress=0;
-  attractToSlide=false;
+  flashAlpha=1.0;transitioning=true;transitionProgress=0;attractToSlide=false;
 }
 
 function triggerSpecificShape(shapeIdx){
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
   shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y}));
-  flashAlpha=1.0;
-  transitioning=true;
-  transitionProgress=0;
-  attractToSlide=false;
+  flashAlpha=1.0;transitioning=true;transitionProgress=0;attractToSlide=false;
 }
 
 // Firebase listeners
@@ -345,6 +344,7 @@ function next(){
   const slideEl=document.getElementById('slide');
   const el=document.getElementById('topic');
   const sub=document.getElementById('subtitle');
+  const qr=document.getElementById('qr-overlay');
 
   el.classList.remove('show');
   sub.classList.remove('show');
@@ -357,16 +357,16 @@ function next(){
     triggerShapeTransition();
   }
 
-if(current.blank){
+  if(current.blank){
+    // First page: no slide box, show QR
     slideEl.classList.add('no-border');
-    // Show QR on first blank page
-    document.getElementById('qr-overlay').classList.remove('hidden');
+    qr.classList.remove('hidden');
   } else {
+    // All other pages: show slide box, hide QR
     slideEl.classList.remove('no-border');
-    // Hide QR on all other pages
-    document.getElementById('qr-overlay').classList.add('hidden');
+    qr.classList.add('hidden');
   }
- 
+
   setTimeout(()=>{
     el.textContent=current.title;
     sub.textContent=current.subtitle;
@@ -375,7 +375,6 @@ if(current.blank){
       if(current.subtitle)sub.classList.add('show');
     }
     updateProgress();
-    // Activate shape-lock mode after transition settles
     setTimeout(()=>{ attractToSlide=true; },1500);
 
     if(current.title.includes('Thank you')){
@@ -387,7 +386,6 @@ if(current.blank){
   },400);
 }
 
-// === HELPERS ===
 function showWord(text,color,name){
   const el=document.createElement('div');
   el.className='word';
@@ -439,13 +437,13 @@ function reboot(){
   document.getElementById('topic').classList.remove('show');
   document.getElementById('subtitle').classList.remove('show');
   document.getElementById('slide').classList.remove('no-border');
+  document.getElementById('qr-overlay').classList.remove('hidden');
   updateProgress();
   attractToSlide=false;
+  shapeOffsetX=0;shapeOffsetY=0;
   fadeAudio(endAudio,0,500);
   fadeAudio(bgAudio,0,500);
   bgStarted=false;
-  shapeOffsetX = 0;
-  shapeOffsetY = 0;
 }
 
 function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
@@ -462,7 +460,6 @@ function draw(){
   }
 
   if(transitioning){
-    // === PHASE 1: shape forming ===
     transitionProgress=Math.min(1,transitionProgress+0.01);
     const t=easeInOut(transitionProgress);
     particles.forEach((p,i)=>{
@@ -473,54 +470,39 @@ function draw(){
     });
     if(transitionProgress>=1){
       transitioning=false;
-      // Snap particles exactly to shape targets
       particles.forEach((p,i)=>{
         p.x=shapeTargets[i].x;
         p.y=shapeTargets[i].y;
-        p.vx=0;
-        p.vy=0;
+        p.vx=0;p.vy=0;
       });
     }
 
- } else if(attractToSlide){
-    // Gyroscope shifts the entire shape as a whole
-    shapeOffsetX += (forceX * 40 - shapeOffsetX) * 0.05;
-    shapeOffsetY += (forceY * 40 - shapeOffsetY) * 0.05;
-
+  } else if(attractToSlide){
+    shapeOffsetX+=(forceX*40-shapeOffsetX)*0.05;
+    shapeOffsetY+=(forceY*40-shapeOffsetY)*0.05;
     particles.forEach((p,i)=>{
-      // Target = shape position + gyro offset + tiny per-particle wobble
-      const tx = shapeTargets[i].x + p.ox + shapeOffsetX;
-      const ty = shapeTargets[i].y + p.oy + shapeOffsetY;
-
-      p.vx += (tx - p.x) * 0.06;
-      p.vy += (ty - p.y) * 0.06;
-
-      p.vx += (Math.random()-.5) * 0.05;
-      p.vy += (Math.random()-.5) * 0.05;
-
-      p.vx *= 0.88;
-      p.vy *= 0.88;
-      p.x += p.vx;
-      p.y += p.vy;
+      const tx=shapeTargets[i].x+p.ox+shapeOffsetX;
+      const ty=shapeTargets[i].y+p.oy+shapeOffsetY;
+      p.vx+=(tx-p.x)*0.06;
+      p.vy+=(ty-p.y)*0.06;
+      p.vx+=(Math.random()-.5)*0.05;
+      p.vy+=(Math.random()-.5)*0.05;
+      p.vx*=0.88;p.vy*=0.88;
+      p.x+=p.vx;p.y+=p.vy;
     });
 
   } else {
-    // === PHASE 0: default float (before first page) ===
     particles.forEach(p=>{
-      p.vx+=forceX*0.03;
-      p.vy+=forceY*0.03;
+      p.vx+=forceX*0.03;p.vy+=forceY*0.03;
       p.vx+=(Math.random()-.5)*0.04;
       p.vy+=(Math.random()-.5)*0.04;
-      p.vx*=.97;
-      p.vy*=.97;
-      p.x+=p.vx;
-      p.y+=p.vy;
+      p.vx*=.97;p.vy*=.97;
+      p.x+=p.vx;p.y+=p.vy;
       if(p.x<0||p.x>W)p.vx*=-1;
       if(p.y<0||p.y>H)p.vy*=-1;
     });
   }
 
-  // Draw particles
   particles.forEach(p=>{
     ctx.beginPath();
     ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
@@ -528,7 +510,6 @@ function draw(){
     ctx.fill();
   });
 
-  // Draw connections
   for(let i=0;i<particles.length;i++){
     for(let j=i+1;j<particles.length;j++){
       const dx=particles[i].x-particles[j].x;
@@ -549,7 +530,6 @@ function draw(){
 }
 draw();
 
-// === KEYBOARD ===
 document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight')next();
   if(e.key==='ArrowLeft'&&idx>0){idx-=2;next();}
