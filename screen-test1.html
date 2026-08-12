@@ -93,7 +93,7 @@
 <div id="info">Players: <span id="count">0</span></div>
 <div id="mode-indicator"></div>
 
-<div id="slide">
+<div id="slide" class="no-border">>
   <div id="slide-number"></div>
   <div id="topic"></div>
   <div id="subtitle"></div>
@@ -356,17 +356,15 @@ function next(){
   } else {
     triggerShapeTransition();
   }
-
-  if(current.blank){
-    // First page: no slide box, show QR
+if(idx===0){
+    // Only the very first page: no box, show QR
     slideEl.classList.add('no-border');
     qr.classList.remove('hidden');
   } else {
-    // All other pages: show slide box, hide QR
+    // All other pages: show box, hide QR
     slideEl.classList.remove('no-border');
     qr.classList.add('hidden');
   }
-
   setTimeout(()=>{
     el.textContent=current.title;
     sub.textContent=current.subtitle;
