@@ -7,7 +7,7 @@
   body{background:#0a0a1a;display:flex;flex-direction:column;
        align-items:center;height:100vh;
        font-family:'Arial',sans-serif;color:#0ff;touch-action:none;overflow:hidden}
-  
+
   #join-screen{position:fixed;top:0;left:0;width:100%;height:100%;
                display:flex;flex-direction:column;align-items:center;
                justify-content:center;padding:30px;z-index:20;background:#0a0a1a}
@@ -20,35 +20,60 @@
   #join-label{font-size:0.8rem;opacity:0.4;margin-bottom:20px}
 
   .hidden{display:none}
-  #main{width:100%;height:100%;display:flex;flex-direction:column;padding:15px}
-  #status{text-align:center;font-size:0.75rem;opacity:0.4;padding:5px 0}
-  #mode-display{text-align:center;font-size:0.85rem;padding:8px;
-                background:rgba(0,255,255,0.05);border-radius:8px;margin:5px 0}
 
-  #energy-section{display:flex;align-items:center;justify-content:center;padding:10px 0;flex:none;height:150px}
-  #tap-btn{width:90px;height:90px;border-radius:50%;
+  /* Main layout: flex column, input pinned to bottom */
+  #main{width:100%;height:100%;display:flex;flex-direction:column;
+        padding:12px 15px;position:relative}
+
+  #status{text-align:center;font-size:0.7rem;opacity:0.35;padding:4px 0}
+
+  /* Mode display — smaller font */
+  #mode-display{text-align:center;font-size:0.75rem;padding:6px 10px;
+                background:rgba(0,255,255,0.05);border-radius:8px;
+                margin:4px 0;opacity:0.8}
+
+  /* Energy button area */
+  #energy-section{display:flex;align-items:center;justify-content:center;
+                  padding:8px 0;flex:none;height:130px}
+  #tap-btn{width:80px;height:80px;border-radius:50%;
            background:radial-gradient(circle,rgba(0,255,255,0.3),rgba(0,255,255,0.05));
            border:2px solid #0ff;box-shadow:0 0 30px rgba(0,255,255,0.2);
            display:flex;align-items:center;justify-content:center;
-           font-size:0.7rem;color:#0ff;cursor:pointer;
+           font-size:0.65rem;color:#0ff;cursor:pointer;
            transition:transform .1s,box-shadow .1s;user-select:none}
   #tap-btn:active{transform:scale(0.9);box-shadow:0 0 50px rgba(0,255,255,0.6);
-                  background:radial-gradient(circle,rgba(0,255,255,0.6),rgba(0,255,255,0.1))}
-  #tap-label{text-align:center;font-size:0.7rem;opacity:0.4;margin-top:8px}
+                background:radial-gradient(circle,rgba(0,255,255,0.6),rgba(0,255,255,0.1))}
+  #tap-label{text-align:center;font-size:0.65rem;opacity:0.35;margin-top:6px}
 
-  #reactions{display:flex;gap:6px;justify-content:center;padding:8px 0;flex-wrap:wrap}
-  .emoji-btn{font-size:1.6rem;background:rgba(255,255,255,0.03);border:1px solid rgba(0,255,255,0.15);
-             border-radius:10px;padding:6px 10px;cursor:pointer;transition:transform .1s,background .2s}
+  /* Emoji reactions */
+  #reactions{display:flex;gap:5px;justify-content:center;
+             padding:6px 0;flex-wrap:wrap;flex:none}
+  .emoji-btn{font-size:1.5rem;background:rgba(255,255,255,0.03);
+             border:1px solid rgba(0,255,255,0.15);
+             border-radius:10px;padding:5px 8px;cursor:pointer;
+             transition:transform .1s,background .2s}
   .emoji-btn:active{transform:scale(1.3);background:rgba(0,255,255,0.2)}
 
-  #input-section{padding:8px 0 20px 0;width:100%}
+  /* Rules — small, subtle, fills middle space */
+  #rules{flex:1;padding:10px 4px 6px 4px;overflow:hidden}
+  .rule-item{font-size:0.62rem;color:rgba(0,255,255,0.3);
+             padding:5px 0;line-height:1.5;text-align:left;
+             border-bottom:1px solid rgba(0,255,255,0.06)}
+  .rule-item:last-child{border-bottom:none}
+
+  /* Input section — pinned to bottom */
+  #input-section{flex:none;padding:8px 0 12px 0;width:100%;
+                 border-top:1px solid rgba(0,255,255,0.08)}
+  #input-label{color:rgba(0,255,255,0.35);font-size:0.65rem;
+               margin-bottom:6px;text-align:center}
   #input-row{display:flex;gap:8px;width:100%}
-  #text-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(0,255,255,0.3);
-              border-radius:10px;padding:12px 15px;color:#fff;font-size:1rem;outline:none}
+  #text-input{flex:1;background:rgba(255,255,255,0.05);
+              border:1px solid rgba(0,255,255,0.3);
+              border-radius:10px;padding:12px 15px;color:#fff;
+              font-size:1rem;outline:none}
   #text-input::placeholder{color:rgba(0,255,255,0.3)}
   #send-btn{background:#0ff;color:#0a0a1a;border:none;padding:12px 18px;
             border-radius:10px;font-weight:bold;font-size:0.9rem;cursor:pointer}
-  #input-label{color:#0ff;font-size:0.7rem;opacity:0.4;margin-bottom:6px;text-align:center}
 </style>
 </head>
 <body>
@@ -60,6 +85,7 @@
 </div>
 
 <div id="main" class="hidden">
+
   <div id="status">Connected as <span id="display-name"></span></div>
   <div id="mode-display">🔋 Tap the circle to power up!</div>
 
@@ -81,13 +107,15 @@
     <div class="emoji-btn" data-emoji="👏">👏</div>
   </div>
 
-<div id="rules">
-    <div class="rule-item">⚡ Tap the button to charge & unlock the session</div>
-    <div class="rule-item">📝 Type a word！ — We're live now </div>
-    <div class="rule-item">❓ Type up whenever you have questions</div>
-    <div class="rule-item">😊 Explore the emoji</div>
+  <!-- Rules fill the middle space -->
+  <div id="rules">
+    <div class="rule-item">⚡ Tap the circle to charge energy & unlock the session</div>
+    <div class="rule-item">📝 Type a word when asked — it appears live on screen</div>
+    <div class="rule-item">❓ Type a question during Q&A — your name shows up</div>
+    <div class="rule-item">😊 Hit any emoji to react anytime</div>
   </div>
- 
+
+  <!-- Input pinned to bottom -->
   <div id="input-section">
     <div id="input-label">Type a word or question</div>
     <div id="input-row">
@@ -95,6 +123,7 @@
       <button id="send-btn">SEND</button>
     </div>
   </div>
+
 </div>
 
 <script type="module">
@@ -152,10 +181,10 @@ function sendText(){
   get(ref(db,'screenMode')).then(snap=>{
     const mode=snap.val()||'shake';
     if(mode==='qa'){
-      push(ref(db,'questions'),{text:text, name:myName, time:Date.now()});
+      push(ref(db,'questions'),{text,name:myName,time:Date.now()});
     } else {
       const color=colors[Math.floor(Math.random()*colors.length)];
-      push(ref(db,'words'),{text:text, name:myName, color:color, time:Date.now()});
+      push(ref(db,'words'),{text,name:myName,color,time:Date.now()});
     }
   });
   input.value='';
@@ -169,7 +198,7 @@ document.getElementById('text-input').addEventListener('keydown',e=>{
 // Emoji reactions
 document.querySelectorAll('.emoji-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    push(ref(db,'reactions'),{emoji:btn.dataset.emoji, name:myName, time:Date.now()});
+    push(ref(db,'reactions'),{emoji:btn.dataset.emoji,name:myName,time:Date.now()});
   });
 });
 
@@ -182,13 +211,10 @@ document.getElementById('tap-btn').addEventListener('click',async()=>{
   if(cur<100) set(ref(db,'energy'),Math.min(cur+10,100));
 });
 
-// Join button
+// Join
 document.getElementById('start-btn').addEventListener('click',async()=>{
   myName=document.getElementById('name-input').value.trim();
-  if(!myName){
-    alert('Please enter your name');
-    return;
-  }
+  if(!myName){ alert('Please enter your name'); return; }
 
   if(typeof DeviceOrientationEvent!=='undefined'
      && typeof DeviceOrientationEvent.requestPermission==='function'){
@@ -199,18 +225,15 @@ document.getElementById('start-btn').addEventListener('click',async()=>{
   document.getElementById('main').classList.remove('hidden');
   document.getElementById('display-name').textContent=myName;
 
-  // Register player
-  set(myRef,{x:0, y:0, name:myName});
+  set(myRef,{x:0,y:0,name:myName});
 
-  // Tilt
   window.addEventListener('deviceorientation',e=>{
     let tx=Math.max(-1,Math.min(1,(e.gamma||0)/30));
     let ty=Math.max(-1,Math.min(1,((e.beta||0)-40)/30));
-    set(myRef,{x:tx, y:ty, name:myName});
+    set(myRef,{x:tx,y:ty,name:myName});
   });
 });
 
-// Also allow Enter key on name input
 document.getElementById('name-input').addEventListener('keydown',e=>{
   if(e.key==='Enter') document.getElementById('start-btn').click();
 });
