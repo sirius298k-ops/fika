@@ -91,7 +91,40 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, onChildAdded }
   from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+// === AUDIO SETUP ===
+const bgAudio = new Audio('bg.mp3');
+bgAudio.loop = true;
+bgAudio.volume = 0;
 
+const endAudio = new Audio('byef1.mp3');
+endAudio.volume = 0;
+
+// Fade function
+function fadeAudio(audio, targetVol, duration){
+  const steps = 30;
+  const interval = duration / steps;
+  const delta = (targetVol - audio.volume) / steps;
+  const timer = setInterval(()=>{
+    audio.volume = Math.min(1, Math.max(0, audio.volume + delta));
+    if((delta>0 && audio.volume>=targetVol)||(delta<0 && audio.volume<=targetVol)){
+      audio.volume = targetVol;
+      clearInterval(timer);
+      if(targetVol===0) audio.pause();
+    }
+  }, interval);
+}
+
+// Start bg music on first user interaction
+let bgStarted = false;
+document.addEventListener('keydown', ()=>{
+  if(!bgStarted){
+    bgStarted = true;
+    bgAudio.play().then(()=>{
+      fadeAudio(bgAudio, 0.15, 2000);
+    }).catch(e=>console.log('bg audio blocked:', e));
+  }
+}, {once: false});
+ 
 const firebaseConfig = {
   apiKey: "AIzaSyAGUS5pDI2Brd5EdZYZYk_N_Ex4G2Enc9Y",
   authDomain: "test1-fika.firebaseapp.com",
