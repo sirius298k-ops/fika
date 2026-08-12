@@ -242,6 +242,7 @@ let transitionProgress=0;
 let transitionFrom=[];
 let transitionTo=[];
 let flashAlpha=0;
+let shapeTargets=[]; // stores final shape positions for each particle
 
 // Progress dots
 const progressEl=document.getElementById('progress');
@@ -278,15 +279,16 @@ const particles=Array.from({length:N},()=>({
   vx:(Math.random()-.5)*0.6,
   vy:(Math.random()-.5)*0.6,
   r:Math.random()*2+0.5,
-  // offset from shape target for slide-area drift
-  ox:(Math.random()-.5)*120,
-  oy:(Math.random()-.5)*80
+  ox:(Math.random()-.5)*18, // small drift around shape position
+  oy:(Math.random()-.5)*18
 }));
+
 
 function triggerShapeTransition(){
   const shapeIdx=1+Math.floor(Math.random()*(shapes.length-1));
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
+  shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y})); // save targets
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
@@ -296,6 +298,7 @@ function triggerShapeTransition(){
 function triggerSpecificShape(shapeIdx){
   transitionFrom=particles.map(p=>({x:p.x,y:p.y}));
   transitionTo=particles.map((p,i)=>shapes[shapeIdx](i,N,W,H));
+  shapeTargets=transitionTo.map(t=>({x:t.x,y:t.y})); // save targets
   flashAlpha=1.0;
   transitioning=true;
   transitionProgress=0;
@@ -494,30 +497,30 @@ function draw(){
       });
     }
   } else if(attractToSlide){
-    // After shape: particles drift slowly around the slide box area
+    // Each particle stays near its OWN shape target position
+    // shapeTargets stores where each particle landed after transition
     particles.forEach((p,i)=>{
-      // Target = slide center + per-particle random offset
-      const tx = slideCX + p.ox;
-      const ty = slideCY + p.oy;
+      const tx = shapeTargets[i].x + p.ox;
+      const ty = shapeTargets[i].y + p.oy;
 
-      // Gentle pull toward target
-      p.vx += (tx - p.x) * 0.003;
-      p.vy += (ty - p.y) * 0.003;
+      // Strong pull back to shape position
+      p.vx += (tx - p.x) * 0.06;
+      p.vy += (ty - p.y) * 0.06;
 
-      // Tiny random wobble so they don't freeze
-      p.vx += (Math.random()-.5)*0.08;
-      p.vy += (Math.random()-.5)*0.08;
+      // Very tiny wobble — just enough to feel alive
+      p.vx += (Math.random()-.5) * 0.05;
+      p.vy += (Math.random()-.5) * 0.05;
 
-      // Phone tilt influence
-      p.vx += forceX * 0.02;
-      p.vy += forceY * 0.02;
+      // Phone tilt
+      p.vx += forceX * 0.015;
+      p.vy += forceY * 0.015;
 
-      p.vx *= 0.94;
-      p.vy *= 0.94;
+      p.vx *= 0.88;
+      p.vy *= 0.88;
       p.x += p.vx;
       p.y += p.vy;
     });
-  } else {
+  }
     // Default float
     particles.forEach(p=>{
       p.vx+=forceX*0.03;
