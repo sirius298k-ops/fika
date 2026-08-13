@@ -471,8 +471,8 @@ function draw(){
       p.vy+=(ty-p.y)*0.04;
 
       // very tiny wobble
-      p.vx+=(Math.random()-.5)*0.025;
-      p.vy+=(Math.random()-.5)*0.025;
+      p.vx+=(Math.random()-.5)*0.12;
+      p.vy+=(Math.random()-.5)*0.12;
 
       p.vx*=0.92; // higher damping = slower movement
       p.vy*=0.92;
